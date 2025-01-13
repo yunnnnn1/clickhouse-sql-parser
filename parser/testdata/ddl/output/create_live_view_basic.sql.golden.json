@@ -6,7 +6,7 @@
       "Database": null,
       "Table": {
         "Name": "my_live_view",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 17,
         "NameEnd": 29
       }
@@ -20,11 +20,12 @@
         "Database": null,
         "Table": {
           "Name": "my_destination",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 49,
           "NameEnd": 63
         }
-      }
+      },
+      "TableSchema": null
     },
     "TableSchema": {
       "SchemaPos": 63,
@@ -34,22 +35,27 @@
           "NamePos": 64,
           "ColumnEnd": 73,
           "Name": {
-            "Name": "id",
-            "Unquoted": false,
-            "NamePos": 64,
-            "NameEnd": 66
+            "Ident": {
+              "Name": "id",
+              "QuoteType": 1,
+              "NamePos": 64,
+              "NameEnd": 66
+            },
+            "DotIdent": null
           },
           "Type": {
             "Name": {
               "Name": "String",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 67,
               "NameEnd": 73
             }
           },
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -70,40 +76,45 @@
       }
     },
     "SubQuery": {
-      "AsPos": 75,
+      "HasParen": false,
       "Select": {
         "SelectPos": 78,
         "StatementEnd": 101,
         "With": null,
         "Top": null,
-        "SelectColumns": {
-          "ListPos": 85,
-          "ListEnd": 87,
-          "HasDistinct": false,
-          "Items": [
-            {
+        "SelectItems": [
+          {
+            "Expr": {
               "Name": "id",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 85,
               "NameEnd": 87
-            }
-          ]
-        },
+            },
+            "Modifiers": [],
+            "Alias": null
+          }
+        ],
         "From": {
           "FromPos": 88,
           "Expr": {
-            "TablePos": 93,
-            "TableEnd": 101,
-            "Alias": null,
-            "Expr": {
-              "Database": null,
-              "Table": {
-                "Name": "my_table",
-                "Unquoted": false,
-                "NamePos": 93,
-                "NameEnd": 101
-              }
-            }
+            "Table": {
+              "TablePos": 93,
+              "TableEnd": 101,
+              "Alias": null,
+              "Expr": {
+                "Database": null,
+                "Table": {
+                  "Name": "my_table",
+                  "QuoteType": 1,
+                  "NamePos": 93,
+                  "NameEnd": 101
+                }
+              },
+              "HasFinal": false
+            },
+            "StatementEnd": 101,
+            "SampleRatio": null,
+            "HasFinal": false
           }
         },
         "ArrayJoin": null,
@@ -117,6 +128,7 @@
         "LimitBy": null,
         "Limit": null,
         "Settings": null,
+        "Format": null,
         "UnionAll": null,
         "UnionDistinct": null,
         "Except": null

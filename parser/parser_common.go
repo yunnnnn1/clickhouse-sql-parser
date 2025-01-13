@@ -18,7 +18,7 @@ func NewParser(buffer string) *Parser {
 
 func (p *Parser) lastTokenKind() TokenKind {
 	if p.last() == nil {
-		return TokenEOF
+		return TokenKindEOF
 	}
 	return p.last().Kind
 }
@@ -37,7 +37,7 @@ func (p *Parser) Pos() Pos {
 
 func (p *Parser) matchTokenKind(kind TokenKind) bool {
 	return p.lastTokenKind() == kind ||
-		(kind == TokenIdent && p.lastTokenKind() == TokenKeyword)
+		(kind == TokenKindIdent && p.lastTokenKind() == TokenKindKeyword)
 }
 
 // consumeTokenKind consumes the last token if it is the given kind.
@@ -58,7 +58,7 @@ func (p *Parser) tryConsumeTokenKind(kind TokenKind) *Token {
 }
 
 func (p *Parser) matchKeyword(keyword string) bool {
-	return p.matchTokenKind(TokenKeyword) && strings.EqualFold(p.last().String, keyword)
+	return p.matchTokenKind(TokenKindKeyword) && strings.EqualFold(p.last().String, keyword)
 }
 
 func (p *Parser) consumeKeyword(keyword string) error {
@@ -79,22 +79,22 @@ func (p *Parser) tryConsumeKeyword(keyword string) *Token {
 }
 
 func (p *Parser) parseIdent() (*Ident, error) {
-	lastToken, err := p.consumeTokenKind(TokenIdent)
+	lastToken, err := p.consumeTokenKind(TokenKindIdent)
 	if err != nil {
 		return nil, err
 	}
 	ident := &Ident{
-		NamePos:  lastToken.Pos,
-		NameEnd:  lastToken.End,
-		Name:     lastToken.String,
-		Unquoted: lastToken.Unquoted,
+		NamePos:   lastToken.Pos,
+		NameEnd:   lastToken.End,
+		Name:      lastToken.String,
+		QuoteType: lastToken.QuoteType,
 	}
 	return ident, nil
 }
 
 func (p *Parser) parseIdentOrStar() (*Ident, error) {
 	switch {
-	case p.matchTokenKind(TokenIdent):
+	case p.matchTokenKind(TokenKindIdent):
 		return p.parseIdent()
 	case p.matchTokenKind("*"):
 		lastToken := p.last()
@@ -109,8 +109,8 @@ func (p *Parser) parseIdentOrStar() (*Ident, error) {
 	}
 }
 
-func (p *Parser) tryParseDotIdent() (*Ident, error) {
-	if p.tryConsumeTokenKind(".") == nil {
+func (p *Parser) tryParseDotIdent(_ Pos) (*Ident, error) {
+	if p.tryConsumeTokenKind(TokenKindDot) == nil {
 		return nil, nil // nolint
 	}
 	return p.parseIdent()
@@ -135,6 +135,13 @@ func (p *Parser) tryParseUUID() (*UUID, error) {
 		return nil, nil // nolint
 	}
 	return p.parseUUID()
+}
+
+func (p *Parser) tryParseComment() (*StringLiteral, error) {
+	if p.tryConsumeKeyword(KeywordComment) == nil {
+		return nil, nil
+	}
+	return p.parseString(p.Pos())
 }
 
 func (p *Parser) tryParseIfExists() (bool, error) {
@@ -200,10 +207,21 @@ func (p *Parser) parseNumber(pos Pos) (*NumberLiteral, error) {
 	var err error
 
 	switch {
-	case p.matchTokenKind(TokenInt):
-		lastToken, err = p.consumeTokenKind(TokenInt)
-	case p.matchTokenKind(TokenFloat):
-		lastToken, err = p.consumeTokenKind(TokenFloat)
+	case p.matchTokenKind(TokenKindInt):
+		lastToken, err = p.consumeTokenKind(TokenKindInt)
+	case p.matchTokenKind(TokenKindFloat):
+		lastToken, err = p.consumeTokenKind(TokenKindFloat)
+	case p.matchTokenKind(TokenKindDot):
+		_ = p.lexer.consumeToken()
+		lastToken, err = p.consumeTokenKind(TokenKindInt)
+		if err != nil {
+			return nil, err
+		}
+		if lastToken.Base != 10 {
+			return nil, fmt.Errorf("invalid decimal literal: %q", lastToken.String)
+		}
+		lastToken.String = "." + lastToken.String
+		lastToken.Kind = TokenKindFloat
 	default:
 		return nil, fmt.Errorf("expected <int> or <float>, but got %q", p.lastTokenKind())
 	}
@@ -220,7 +238,7 @@ func (p *Parser) parseNumber(pos Pos) (*NumberLiteral, error) {
 }
 
 func (p *Parser) parseString(pos Pos) (*StringLiteral, error) {
-	lastToken, err := p.consumeTokenKind(TokenString)
+	lastToken, err := p.consumeTokenKind(TokenKindString)
 	if err != nil {
 		return nil, err
 	}
@@ -234,9 +252,9 @@ func (p *Parser) parseString(pos Pos) (*StringLiteral, error) {
 
 func (p *Parser) parseLiteral(pos Pos) (Literal, error) {
 	switch {
-	case p.matchTokenKind(TokenInt):
+	case p.matchTokenKind(TokenKindInt), p.matchTokenKind(TokenKindFloat):
 		return p.parseNumber(pos)
-	case p.matchTokenKind(TokenString):
+	case p.matchTokenKind(TokenKindString):
 		return p.parseString(pos)
 	case p.matchKeyword(KeywordNull):
 		// accept the NULL keyword
@@ -246,12 +264,12 @@ func (p *Parser) parseLiteral(pos Pos) (Literal, error) {
 	}
 }
 
-func (p *Parser) ParseNestedIdentifier(_ Pos) (*NestedIdentifier, error) {
+func (p *Parser) ParseNestedIdentifier(pos Pos) (*NestedIdentifier, error) {
 	ident, err := p.parseIdent()
 	if err != nil {
 		return nil, err
 	}
-	dotIdent, err := p.tryParseDotIdent()
+	dotIdent, err := p.tryParseDotIdent(p.Pos())
 	if err != nil {
 		return nil, err
 	}
@@ -266,14 +284,14 @@ func (p *Parser) ParseNestedIdentifier(_ Pos) (*NestedIdentifier, error) {
 	}, nil
 }
 
-func (p *Parser) tryParseFormatExpr(pos Pos) (*FormatExpr, error) {
+func (p *Parser) tryParseFormat(pos Pos) (*FormatClause, error) {
 	if !p.matchKeyword(KeywordFormat) {
 		return nil, nil // nolint
 	}
-	return p.parseFormatExpr(pos)
+	return p.parseFormat(pos)
 }
 
-func (p *Parser) parseFormatExpr(pos Pos) (*FormatExpr, error) {
+func (p *Parser) parseFormat(pos Pos) (*FormatClause, error) {
 	if err := p.consumeKeyword(KeywordFormat); err != nil {
 		return nil, err
 	}
@@ -281,7 +299,7 @@ func (p *Parser) parseFormatExpr(pos Pos) (*FormatExpr, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &FormatExpr{
+	return &FormatClause{
 		FormatPos: pos,
 		Format:    formatIdent,
 	}, nil
@@ -314,7 +332,11 @@ func (p *Parser) wrapError(err error) error {
 			for j := 0; j < column; j++ {
 				buf.WriteByte(' ')
 			}
-			buf.WriteString(strings.Repeat("^", len(p.lexer.lastToken.String)))
+			if p.last() != nil {
+				buf.WriteString(strings.Repeat("^", len(p.last().String)))
+			} else {
+				buf.WriteString("^")
+			}
 			buf.WriteByte('\n')
 		}
 	}
@@ -328,7 +350,7 @@ func (p *Parser) parseRatioExpr(pos Pos) (*RatioExpr, error) {
 	}
 
 	var denominator *NumberLiteral
-	if p.tryConsumeTokenKind(opTypeDiv) != nil {
+	if p.tryConsumeTokenKind(TokenKindDiv) != nil {
 		denominator, err = p.parseNumber(pos)
 		if err != nil {
 			return nil, err

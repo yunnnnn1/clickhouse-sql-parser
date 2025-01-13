@@ -11,7 +11,7 @@
           "Expr": {
             "Name": {
               "Name": "test",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 9,
               "NameEnd": 13
             },
@@ -24,22 +24,31 @@
                 "HasDistinct": false,
                 "Items": [
                   {
-                    "Name": "f1",
-                    "Unquoted": false,
-                    "NamePos": 14,
-                    "NameEnd": 16
+                    "Expr": {
+                      "Name": "f1",
+                      "QuoteType": 1,
+                      "NamePos": 14,
+                      "NameEnd": 16
+                    },
+                    "Alias": null
                   },
                   {
-                    "Name": "f2",
-                    "Unquoted": false,
-                    "NamePos": 18,
-                    "NameEnd": 20
+                    "Expr": {
+                      "Name": "f2",
+                      "QuoteType": 1,
+                      "NamePos": 18,
+                      "NameEnd": 20
+                    },
+                    "Alias": null
                   },
                   {
-                    "Name": "f3",
-                    "Unquoted": false,
-                    "NamePos": 22,
-                    "NameEnd": 24
+                    "Expr": {
+                      "Name": "f3",
+                      "QuoteType": 1,
+                      "NamePos": 22,
+                      "NameEnd": 24
+                    },
+                    "Alias": null
                   }
                 ]
               },
@@ -51,46 +60,59 @@
             "StatementEnd": 58,
             "With": null,
             "Top": null,
-            "SelectColumns": {
-              "ListPos": 37,
-              "ListEnd": 47,
-              "HasDistinct": false,
-              "Items": [
-                {
+            "SelectItems": [
+              {
+                "Expr": {
                   "Name": "f4",
-                  "Unquoted": false,
+                  "QuoteType": 1,
                   "NamePos": 37,
                   "NameEnd": 39
                 },
-                {
+                "Modifiers": [],
+                "Alias": null
+              },
+              {
+                "Expr": {
                   "Name": "f5",
-                  "Unquoted": false,
+                  "QuoteType": 1,
                   "NamePos": 41,
                   "NameEnd": 43
                 },
-                {
+                "Modifiers": [],
+                "Alias": null
+              },
+              {
+                "Expr": {
                   "Name": "f6",
-                  "Unquoted": false,
+                  "QuoteType": 1,
                   "NamePos": 45,
                   "NameEnd": 47
-                }
-              ]
-            },
+                },
+                "Modifiers": [],
+                "Alias": null
+              }
+            ],
             "From": {
               "FromPos": 48,
               "Expr": {
-                "TablePos": 53,
-                "TableEnd": 58,
-                "Alias": null,
-                "Expr": {
-                  "Database": null,
-                  "Table": {
-                    "Name": "sales",
-                    "Unquoted": false,
-                    "NamePos": 53,
-                    "NameEnd": 58
-                  }
-                }
+                "Table": {
+                  "TablePos": 53,
+                  "TableEnd": 58,
+                  "Alias": null,
+                  "Expr": {
+                    "Database": null,
+                    "Table": {
+                      "Name": "sales",
+                      "QuoteType": 1,
+                      "NamePos": 53,
+                      "NameEnd": 58
+                    }
+                  },
+                  "HasFinal": false
+                },
+                "StatementEnd": 58,
+                "SampleRatio": null,
+                "HasFinal": false
               }
             },
             "ArrayJoin": null,
@@ -104,6 +126,7 @@
             "LimitBy": null,
             "Limit": null,
             "Settings": null,
+            "Format": null,
             "UnionAll": null,
             "UnionDistinct": null,
             "Except": null
@@ -112,73 +135,74 @@
       ]
     },
     "Top": null,
-    "SelectColumns": {
-      "ListPos": 71,
-      "ListEnd": 119,
-      "HasDistinct": false,
-      "Items": [
-        {
-          "Expr": {
-            "Name": "f1",
-            "Unquoted": false,
-            "NamePos": 71,
-            "NameEnd": 73
-          },
-          "AliasPos": 74,
-          "Alias": {
-            "Name": "new_f1",
-            "Unquoted": false,
-            "NamePos": 77,
-            "NameEnd": 83
-          }
+    "SelectItems": [
+      {
+        "Expr": {
+          "Name": "f1",
+          "QuoteType": 1,
+          "NamePos": 71,
+          "NameEnd": 73
         },
-        {
-          "Expr": {
-            "Name": "f2",
-            "Unquoted": false,
-            "NamePos": 89,
-            "NameEnd": 91
-          },
-          "AliasPos": 92,
-          "Alias": {
-            "Name": "new_f2",
-            "Unquoted": false,
-            "NamePos": 95,
-            "NameEnd": 101
-          }
-        },
-        {
-          "Expr": {
-            "Name": "f3",
-            "Unquoted": false,
-            "NamePos": 107,
-            "NameEnd": 109
-          },
-          "AliasPos": 110,
-          "Alias": {
-            "Name": "new_f3",
-            "Unquoted": false,
-            "NamePos": 113,
-            "NameEnd": 119
-          }
+        "Modifiers": [],
+        "Alias": {
+          "Name": "new_f1",
+          "QuoteType": 1,
+          "NamePos": 77,
+          "NameEnd": 83
         }
-      ]
-    },
+      },
+      {
+        "Expr": {
+          "Name": "f2",
+          "QuoteType": 1,
+          "NamePos": 89,
+          "NameEnd": 91
+        },
+        "Modifiers": [],
+        "Alias": {
+          "Name": "new_f2",
+          "QuoteType": 1,
+          "NamePos": 95,
+          "NameEnd": 101
+        }
+      },
+      {
+        "Expr": {
+          "Name": "f3",
+          "QuoteType": 1,
+          "NamePos": 107,
+          "NameEnd": 109
+        },
+        "Modifiers": [],
+        "Alias": {
+          "Name": "new_f3",
+          "QuoteType": 1,
+          "NamePos": 113,
+          "NameEnd": 119
+        }
+      }
+    ],
     "From": {
       "FromPos": 120,
       "Expr": {
-        "TablePos": 129,
-        "TableEnd": 133,
-        "Alias": null,
-        "Expr": {
-          "Database": null,
-          "Table": {
-            "Name": "test",
-            "Unquoted": false,
-            "NamePos": 129,
-            "NameEnd": 133
-          }
-        }
+        "Table": {
+          "TablePos": 129,
+          "TableEnd": 133,
+          "Alias": null,
+          "Expr": {
+            "Database": null,
+            "Table": {
+              "Name": "test",
+              "QuoteType": 1,
+              "NamePos": 129,
+              "NameEnd": 133
+            }
+          },
+          "HasFinal": false
+        },
+        "StatementEnd": 133,
+        "SampleRatio": null,
+        "HasFinal": false
       }
     },
     "ArrayJoin": null,
@@ -192,6 +216,7 @@
     "LimitBy": null,
     "Limit": null,
     "Settings": null,
+    "Format": null,
     "UnionAll": null,
     "UnionDistinct": null,
     "Except": null

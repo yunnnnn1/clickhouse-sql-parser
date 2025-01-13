@@ -14,34 +14,39 @@
       },
       "WithTies": false
     },
-    "SelectColumns": {
-      "ListPos": 14,
-      "ListEnd": 23,
-      "HasDistinct": false,
-      "Items": [
-        {
+    "SelectItems": [
+      {
+        "Expr": {
           "Name": "my_column",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 14,
           "NameEnd": 23
-        }
-      ]
-    },
+        },
+        "Modifiers": [],
+        "Alias": null
+      }
+    ],
     "From": {
       "FromPos": 24,
       "Expr": {
-        "TablePos": 29,
-        "TableEnd": 38,
-        "Alias": null,
-        "Expr": {
-          "Database": null,
-          "Table": {
-            "Name": "tableName",
-            "Unquoted": false,
-            "NamePos": 29,
-            "NameEnd": 38
-          }
-        }
+        "Table": {
+          "TablePos": 29,
+          "TableEnd": 38,
+          "Alias": null,
+          "Expr": {
+            "Database": null,
+            "Table": {
+              "Name": "tableName",
+              "QuoteType": 1,
+              "NamePos": 29,
+              "NameEnd": 38
+            }
+          },
+          "HasFinal": false
+        },
+        "StatementEnd": 38,
+        "SampleRatio": null,
+        "HasFinal": false
       }
     },
     "ArrayJoin": null,
@@ -55,6 +60,7 @@
     "LimitBy": null,
     "Limit": null,
     "Settings": null,
+    "Format": null,
     "UnionAll": null,
     "UnionDistinct": null,
     "Except": null

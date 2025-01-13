@@ -1,5 +1,5 @@
 # ClickHouse SQL Parser 
-![GitHub CI](https://github.com/AfterShip/clickhouse-sql-parser/actions/workflows/ci.yaml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/AfterShip/clickhouse-sql-parser)](https://goreportcard.com/report/github.com/AfterShip/clickhouse-sql-parser) [![LICENSE](https://img.shields.io/github/license/AfterShip/clickhouse-sql-parser.svg)](https://github.com/AfterShip/clickhouse-sql-parser/blob/master/LICENSE) [![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/AfterShip/clickhouse-sql-parser) [![Coverage Status](https://coveralls.io/repos/github/AfterShip/clickhouse-sql-parser/badge.svg?branch=master)](https://coveralls.io/github/AfterShip/clickhouse-sql-parser?branch=master)
+![GitHub CI](https://github.com/AfterShip/clickhouse-sql-parser/actions/workflows/ci.yaml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/AfterShip/clickhouse-sql-parser)](https://goreportcard.com/report/github.com/AfterShip/clickhouse-sql-parser) [![LICENSE](https://img.shields.io/github/license/AfterShip/clickhouse-sql-parser.svg)](https://github.com/AfterShip/clickhouse-sql-parser/blob/master/LICENSE) [![GoDoc](https://img.shields.io/badge/Godoc-reference-blue.svg)](https://godoc.org/github.com/AfterShip/clickhouse-sql-parser) [![Coverage Status](https://coveralls.io/repos/github/AfterShip/clickhouse-sql-parser/badge.svg?branch=master)](https://coveralls.io/github/AfterShip/clickhouse-sql-parser?branch=master) <a href="https://hellogithub.com/repository/23597949cafa410bba6039ddb8867543" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=23597949cafa410bba6039ddb8867543&claim_uid=kyCYu1VAKgwD8rE&theme=small" alt="Featured｜HelloGitHub" /></a>
 
 The goal of this project is to build a ClickHouse SQL parser in Go with the following key features:
 
@@ -23,21 +23,30 @@ import (
 query := "SELECT * FROM clickhouse"
 parser := clickhouse.NewParser(query)
 // Parse query into AST
-statements, err := parser.ParseStatements()
+statements, err := parser.ParseStmts()
 if err != nil {
     return nil, err
 }
-
-// To beautify query, it's as simple as:
-for _, statement := range statements {
-    fmt.Println(statement.String(0))
-}
 ```
 
-- Use clickhouse-sql-parser as a CLI tool
+- Install clickhouse-sql-parser as a CLI tool
+
+
+On Linux:
 
 ```bash
 $ go install github.com/AfterShip/clickhouse-sql-parser@latest
+```
+
+On macOS:
+
+```bash
+$ brew install clickhouse-sql-parser
+```
+
+Parse ClickHouse SQL into AST or beautify ClickHouse SQL format:
+
+```bash
 ## Parse query into AST
 $ clickhouse-sql-parser "SELECT * FROM clickhouse WHERE a=100"
 
@@ -46,6 +55,22 @@ $ clickhouse-sql-parser -format "SELECT * FROM clickhouse WHERE a=100"
 
 ## Parse query from file
 $ clickhouse-sql-parser -file ./test.sql
+```
+
+- Parsed tree(AST) back into a SQL statement
+
+```Go
+parser := clickhouse.NewParser("SELECT * FROM clickhouse")
+// Parse query into AST
+statements, err := parser.ParseStmts()
+if err != nil {
+    return nil, err
+}
+
+// Call the String method to unparsed AST into a SQL string
+for _, stmt := range statements {
+  fmt.Println(stmt.String())
+}
 ```
 ## Update test assets
 

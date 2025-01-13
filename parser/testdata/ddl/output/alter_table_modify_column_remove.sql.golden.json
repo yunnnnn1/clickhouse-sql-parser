@@ -6,7 +6,7 @@
       "Database": null,
       "Table": {
         "Name": "t1",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 12,
         "NameEnd": 14
       }
@@ -21,15 +21,20 @@
           "NamePos": 29,
           "ColumnEnd": 31,
           "Name": {
-            "Name": "f1",
-            "Unquoted": false,
-            "NamePos": 29,
-            "NameEnd": 31
+            "Ident": {
+              "Name": "f1",
+              "QuoteType": 1,
+              "NamePos": 29,
+              "NameEnd": 31
+            },
+            "DotIdent": null
           },
           "Type": null,
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -40,7 +45,7 @@
           "PropertyType": {
             "Name": {
               "Name": "COMMENT",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 39,
               "NameEnd": 46
             }

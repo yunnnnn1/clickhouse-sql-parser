@@ -5,13 +5,13 @@
     "Name": {
       "Database": {
         "Name": "test",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 13,
         "NameEnd": 17
       },
       "Table": {
         "Name": "event_all",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 18,
         "NameEnd": 27
       }
@@ -33,13 +33,13 @@
       "AliasTable": {
         "Database": {
           "Name": "test",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 60,
           "NameEnd": 64
         },
         "Table": {
           "Name": "evnets_local",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 65,
           "NameEnd": 77
         }
@@ -59,41 +59,53 @@
           "HasDistinct": false,
           "Items": [
             {
-              "Name": "default_cluster",
-              "Unquoted": false,
-              "NamePos": 104,
-              "NameEnd": 119
-            },
-            {
-              "Name": "test",
-              "Unquoted": false,
-              "NamePos": 125,
-              "NameEnd": 129
-            },
-            {
-              "Name": "events_local",
-              "Unquoted": false,
-              "NamePos": 135,
-              "NameEnd": 147
-            },
-            {
-              "Name": {
-                "Name": "rand",
-                "Unquoted": false,
-                "NamePos": 153,
-                "NameEnd": 157
+              "Expr": {
+                "Name": "default_cluster",
+                "QuoteType": 1,
+                "NamePos": 104,
+                "NameEnd": 119
               },
-              "Params": {
-                "LeftParenPos": 157,
-                "RightParenPos": 158,
-                "Items": {
-                  "ListPos": 158,
-                  "ListEnd": 158,
-                  "HasDistinct": false,
-                  "Items": []
+              "Alias": null
+            },
+            {
+              "Expr": {
+                "Name": "test",
+                "QuoteType": 1,
+                "NamePos": 125,
+                "NameEnd": 129
+              },
+              "Alias": null
+            },
+            {
+              "Expr": {
+                "Name": "events_local",
+                "QuoteType": 1,
+                "NamePos": 135,
+                "NameEnd": 147
+              },
+              "Alias": null
+            },
+            {
+              "Expr": {
+                "Name": {
+                  "Name": "rand",
+                  "QuoteType": 1,
+                  "NamePos": 153,
+                  "NameEnd": 157
                 },
-                "ColumnArgList": null
-              }
+                "Params": {
+                  "LeftParenPos": 157,
+                  "RightParenPos": 158,
+                  "Items": {
+                    "ListPos": 158,
+                    "ListEnd": 158,
+                    "HasDistinct": false,
+                    "Items": []
+                  },
+                  "ColumnArgList": null
+                }
+              },
+              "Alias": null
             }
           ]
         },
@@ -102,8 +114,8 @@
       "PrimaryKey": null,
       "PartitionBy": null,
       "SampleBy": null,
-      "TTLExprList": null,
-      "SettingsExprList": {
+      "TTL": null,
+      "Settings": {
         "SettingsPos": 162,
         "ListEnd": 191,
         "Items": [
@@ -111,7 +123,7 @@
             "SettingsPos": 171,
             "Name": {
               "Name": "fsync_after_insert",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 171,
               "NameEnd": 189
             },
@@ -124,9 +136,10 @@
           }
         ]
       },
-      "OrderByListExpr": null
+      "OrderBy": null
     },
     "SubQuery": null,
-    "HasTemporary": false
+    "HasTemporary": false,
+    "Comment": null
   }
 ]

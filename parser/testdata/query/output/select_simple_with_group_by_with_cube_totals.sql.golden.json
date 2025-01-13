@@ -4,21 +4,22 @@
     "StatementEnd": 86,
     "With": null,
     "Top": null,
-    "SelectColumns": {
-      "ListPos": 7,
-      "ListEnd": 17,
-      "HasDistinct": false,
-      "Items": [
-        {
+    "SelectItems": [
+      {
+        "Expr": {
           "Name": "a",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 7,
           "NameEnd": 8
         },
-        {
+        "Modifiers": [],
+        "Alias": null
+      },
+      {
+        "Expr": {
           "Name": {
             "Name": "COUNT",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 10,
             "NameEnd": 15
           },
@@ -31,33 +32,44 @@
               "HasDistinct": false,
               "Items": [
                 {
-                  "Name": "b",
-                  "Unquoted": false,
-                  "NamePos": 16,
-                  "NameEnd": 17
+                  "Expr": {
+                    "Name": "b",
+                    "QuoteType": 1,
+                    "NamePos": 16,
+                    "NameEnd": 17
+                  },
+                  "Alias": null
                 }
               ]
             },
             "ColumnArgList": null
           }
-        }
-      ]
-    },
+        },
+        "Modifiers": [],
+        "Alias": null
+      }
+    ],
     "From": {
       "FromPos": 19,
       "Expr": {
-        "TablePos": 24,
-        "TableEnd": 36,
-        "Alias": null,
-        "Expr": {
-          "Database": null,
-          "Table": {
-            "Name": "group_by_all",
-            "Unquoted": false,
-            "NamePos": 24,
-            "NameEnd": 36
-          }
-        }
+        "Table": {
+          "TablePos": 24,
+          "TableEnd": 36,
+          "Alias": null,
+          "Expr": {
+            "Database": null,
+            "Table": {
+              "Name": "group_by_all",
+              "QuoteType": 1,
+              "NamePos": 24,
+              "NameEnd": 36
+            }
+          },
+          "HasFinal": false
+        },
+        "StatementEnd": 36,
+        "SampleRatio": null,
+        "HasFinal": false
       }
     },
     "ArrayJoin": null,
@@ -76,10 +88,13 @@
           "HasDistinct": false,
           "Items": [
             {
-              "Name": "a",
-              "Unquoted": false,
-              "NamePos": 51,
-              "NameEnd": 52
+              "Expr": {
+                "Name": "a",
+                "QuoteType": 1,
+                "NamePos": 51,
+                "NameEnd": 52
+              },
+              "Alias": null
             }
           ]
         },
@@ -99,10 +114,11 @@
           "OrderPos": 76,
           "Expr": {
             "Name": "a",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 85,
             "NameEnd": 86
           },
+          "Alias": null,
           "Direction": "None"
         }
       ]
@@ -110,6 +126,7 @@
     "LimitBy": null,
     "Limit": null,
     "Settings": null,
+    "Format": null,
     "UnionAll": null,
     "UnionDistinct": null,
     "Except": null

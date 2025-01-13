@@ -8,7 +8,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 34,
           "NameEnd": 42
         },
@@ -28,7 +28,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 56,
           "NameEnd": 64
         },
@@ -37,7 +37,7 @@
           "OnPos": 65,
           "Expr": {
             "Name": "cluster_1",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 76,
             "NameEnd": 85
           }
@@ -56,7 +56,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 99,
           "NameEnd": 107
         },
@@ -66,7 +66,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 109,
           "NameEnd": 117
         },
@@ -86,7 +86,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 131,
           "NameEnd": 139
         },
@@ -95,7 +95,7 @@
           "OnPos": 140,
           "Expr": {
             "Name": "cluster_1",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 151,
             "NameEnd": 160
           }
@@ -104,7 +104,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 162,
           "NameEnd": 170
         },
@@ -124,7 +124,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 184,
           "NameEnd": 192
         },
@@ -133,7 +133,7 @@
           "OnPos": 193,
           "Expr": {
             "Name": "cluster_1",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 204,
             "NameEnd": 213
           }
@@ -142,7 +142,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 215,
           "NameEnd": 223
         },
@@ -151,7 +151,7 @@
           "OnPos": 224,
           "Expr": {
             "Name": "cluster_2",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 235,
             "NameEnd": 244
           }
@@ -170,7 +170,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 258,
           "NameEnd": 266
         },
@@ -184,7 +184,7 @@
         "SettingPairs": [],
         "Modifier": {
           "Name": "NONE",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 276,
           "NameEnd": 280
         }
@@ -200,7 +200,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 294,
           "NameEnd": 302
         },
@@ -215,10 +215,11 @@
           {
             "Name": {
               "Name": "PROFILE",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 312,
               "NameEnd": 319
             },
+            "Operation": "",
             "Value": {
               "LiteralPos": 321,
               "LiteralEnd": 328,
@@ -239,7 +240,7 @@
       {
         "Name": {
           "Name": "r3_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 343,
           "NameEnd": 351
         },
@@ -254,10 +255,11 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 361,
               "NameEnd": 377
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 378,
               "NumEnd": 385,
@@ -279,7 +281,7 @@
       {
         "Name": {
           "Name": "r4_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 399,
           "NameEnd": 407
         },
@@ -294,19 +296,21 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 417,
               "NameEnd": 433
             },
+            "Operation": "",
             "Value": null
           },
           {
             "Name": {
               "Name": "MIN",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 434,
               "NameEnd": 437
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 438,
               "NumEnd": 445,
@@ -328,7 +332,7 @@
       {
         "Name": {
           "Name": "r5_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 459,
           "NameEnd": 467
         },
@@ -343,19 +347,21 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 477,
               "NameEnd": 493
             },
+            "Operation": "",
             "Value": null
           },
           {
             "Name": {
               "Name": "MAX",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 494,
               "NameEnd": 497
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 498,
               "NumEnd": 505,
@@ -377,7 +383,7 @@
       {
         "Name": {
           "Name": "r6_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 519,
           "NameEnd": 527
         },
@@ -392,16 +398,17 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 537,
               "NameEnd": 553
             },
+            "Operation": "",
             "Value": null
           }
         ],
         "Modifier": {
           "Name": "CONST",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 554,
           "NameEnd": 559
         }
@@ -417,7 +424,7 @@
       {
         "Name": {
           "Name": "r7_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 573,
           "NameEnd": 581
         },
@@ -432,16 +439,17 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 591,
               "NameEnd": 607
             },
+            "Operation": "",
             "Value": null
           }
         ],
         "Modifier": {
           "Name": "WRITABLE",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 608,
           "NameEnd": 616
         }
@@ -457,7 +465,7 @@
       {
         "Name": {
           "Name": "r8_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 630,
           "NameEnd": 638
         },
@@ -472,10 +480,11 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 648,
               "NameEnd": 664
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 665,
               "NumEnd": 672,
@@ -486,10 +495,11 @@
           {
             "Name": {
               "Name": "MIN",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 673,
               "NameEnd": 676
             },
+            "Operation": "",
             "Value": {
               "NumPos": 677,
               "NumEnd": 684,
@@ -500,10 +510,11 @@
           {
             "Name": {
               "Name": "MAX",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 685,
               "NameEnd": 688
             },
+            "Operation": "",
             "Value": {
               "NumPos": 689,
               "NumEnd": 696,
@@ -514,7 +525,7 @@
         ],
         "Modifier": {
           "Name": "CONST",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 697,
           "NameEnd": 702
         }
@@ -530,7 +541,7 @@
       {
         "Name": {
           "Name": "r9_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 716,
           "NameEnd": 724
         },
@@ -545,10 +556,11 @@
           {
             "Name": {
               "Name": "PROFILE",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 734,
               "NameEnd": 741
             },
+            "Operation": "",
             "Value": {
               "LiteralPos": 743,
               "LiteralEnd": 750,
@@ -563,10 +575,11 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 753,
               "NameEnd": 769
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 770,
               "NumEnd": 777,
@@ -577,7 +590,7 @@
         ],
         "Modifier": {
           "Name": "WRITABLE",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 778,
           "NameEnd": 786
         }
@@ -593,7 +606,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 800,
           "NameEnd": 808
         },
@@ -603,7 +616,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 810,
           "NameEnd": 818
         },
@@ -623,7 +636,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 832,
           "NameEnd": 840
         },
@@ -638,10 +651,11 @@
           {
             "Name": {
               "Name": "readonly",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 850,
               "NameEnd": 858
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 859,
               "NumEnd": 860,
@@ -663,7 +677,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 874,
           "NameEnd": 882
         },
@@ -678,10 +692,11 @@
           {
             "Name": {
               "Name": "PROFILE",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 892,
               "NameEnd": 899
             },
+            "Operation": "",
             "Value": {
               "LiteralPos": 901,
               "LiteralEnd": 908,
@@ -702,7 +717,7 @@
       {
         "Name": {
           "Name": "r3_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 923,
           "NameEnd": 931
         },
@@ -717,10 +732,11 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 941,
               "NameEnd": 957
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 958,
               "NumEnd": 965,
@@ -731,10 +747,11 @@
           {
             "Name": {
               "Name": "MIN",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 966,
               "NameEnd": 969
             },
+            "Operation": "",
             "Value": {
               "NumPos": 970,
               "NumEnd": 977,
@@ -745,10 +762,11 @@
           {
             "Name": {
               "Name": "MAX",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 978,
               "NameEnd": 981
             },
+            "Operation": "",
             "Value": {
               "NumPos": 982,
               "NumEnd": 989,
@@ -759,7 +777,7 @@
         ],
         "Modifier": {
           "Name": "WRITABLE",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 990,
           "NameEnd": 998
         }
@@ -775,7 +793,7 @@
       {
         "Name": {
           "Name": "r4_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 1012,
           "NameEnd": 1020
         },
@@ -790,10 +808,11 @@
           {
             "Name": {
               "Name": "PROFILE",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 1030,
               "NameEnd": 1037
             },
+            "Operation": "",
             "Value": {
               "LiteralPos": 1039,
               "LiteralEnd": 1046,
@@ -808,10 +827,11 @@
           {
             "Name": {
               "Name": "max_memory_usage",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 1049,
               "NameEnd": 1065
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 1066,
               "NumEnd": 1073,
@@ -827,10 +847,11 @@
           {
             "Name": {
               "Name": "readonly",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 1075,
               "NameEnd": 1083
             },
+            "Operation": "=",
             "Value": {
               "NumPos": 1084,
               "NumEnd": 1085,
@@ -852,7 +873,7 @@
       {
         "Name": {
           "Name": "r5_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 1099,
           "NameEnd": 1107
         },
@@ -866,7 +887,7 @@
         "SettingPairs": [],
         "Modifier": {
           "Name": "NONE",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 1117,
           "NameEnd": 1121
         }
@@ -882,7 +903,7 @@
       {
         "Name": {
           "Name": "r1_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 1135,
           "NameEnd": 1143
         },
@@ -906,7 +927,7 @@
       {
         "Name": {
           "Name": "r2_01293",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 1161,
           "NameEnd": 1169
         },

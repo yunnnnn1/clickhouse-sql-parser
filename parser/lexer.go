@@ -9,14 +9,47 @@ import (
 )
 
 const (
-	TokenEOF     TokenKind = "<eof>"
-	TokenIdent   TokenKind = "<ident>"
-	TokenKeyword TokenKind = "<keyword>"
-	TokenInt     TokenKind = "<int>"
-	TokenFloat   TokenKind = "<float>"
-	TokenString  TokenKind = "<string>"
-	TokenCast    TokenKind = "<cast>"
-	TokenArrow   TokenKind = "<arrow>"
+	TokenKindEOF          TokenKind = "<eof>"
+	TokenKindIdent        TokenKind = "<ident>"
+	TokenKindKeyword      TokenKind = "<keyword>"
+	TokenKindInt          TokenKind = "<int>"
+	TokenKindFloat        TokenKind = "<float>"
+	TokenKindString       TokenKind = "<string>"
+	TokenKindDot                    = "."
+	TokenKindSingleEQ     TokenKind = "="
+	TokenKindDoubleEQ     TokenKind = "=="
+	TokenKindNE           TokenKind = "!="
+	TokenKindLT           TokenKind = "<"
+	TokenKindLE           TokenKind = "<="
+	TokenKindGT           TokenKind = ">"
+	TokenKindGE           TokenKind = ">="
+	TokenKindQuestionMark TokenKind = "?"
+
+	TokenKindPlus  TokenKind = "+"
+	TokenKindMinus TokenKind = "-"
+	TokenKindMul   TokenKind = "*"
+	TokenKindDiv   TokenKind = "/"
+	TokenKindMod   TokenKind = "%"
+
+	TokenKindArrow TokenKind = "->"
+	TokenKindDash  TokenKind = "::"
+
+	TokenKindLParen   TokenKind = "("
+	TokenKindRParen   TokenKind = ")"
+	TokenKindLBrace   TokenKind = "{"
+	TokenKindRBrace   TokenKind = "}"
+	TokenKindLBracket TokenKind = "["
+	TokenKindRBracket TokenKind = "]"
+
+	TokenKindComma  TokenKind = ","
+	TokenKindColon  TokenKind = ":"
+	TokenKindAtSign TokenKind = "@"
+)
+
+const (
+	Unquoted = iota + 1
+	DoubleQuote
+	BackTicks
 )
 
 type Pos int
@@ -26,10 +59,17 @@ type Token struct {
 	Pos Pos
 	End Pos
 
-	Kind     TokenKind
-	String   string
-	Base     int // 10 or 16 on TokenInt
-	Unquoted bool
+	Kind      TokenKind
+	String    string
+	Base      int // 10 or 16 on TokenKindInt
+	QuoteType int
+}
+
+func (t *Token) ToString() string {
+	if t.Kind == TokenKindKeyword {
+		return strings.ToUpper(t.String)
+	}
+	return t.String
 }
 
 type Lexer struct {
@@ -75,7 +115,7 @@ func (l *Lexer) consumeNumber() error {
 	}
 
 	hasExp := false
-	tokenKind := TokenInt
+	tokenKind := TokenKindInt
 	hasNumberPart := false
 	for l.peekOk(i) {
 		hasNumberPart = true
@@ -88,7 +128,7 @@ func (l *Lexer) consumeNumber() error {
 			i++
 			continue
 		case c == '.': // float
-			tokenKind = TokenFloat
+			tokenKind = TokenKindFloat
 			i++
 			continue
 		case base != 16 && (c == 'e' || c == 'E' || c == 'p' || c == 'P'):
@@ -123,39 +163,48 @@ func (l *Lexer) consumeNumber() error {
 
 func (l *Lexer) consumeIdent(_ Pos) error {
 	token := &Token{}
-	isUnquoted := false
-	if l.peekOk(0) && l.peekN(0) == '`' {
+	quoteType := Unquoted
+	if l.peekOk(0) && (l.peekN(0) == '`' || l.peekN(0) == '"') {
+		if l.peekOk(0) && l.peekN(0) == '`' {
+			quoteType = BackTicks
+		} else {
+			quoteType = DoubleQuote
+		}
 		l.skipN(1)
-		isUnquoted = true
 	}
 
 	i := 0
-	if !isUnquoted {
+	if quoteType == Unquoted {
+		if l.peekN(i) == '$' {
+			i++
+		}
 		for l.peekOk(i) && IsIdentPart(l.peekN(i)) {
 			i++
 		}
 	} else {
-		for l.peekOk(i) && l.peekN(i) != '`' {
+		for l.peekOk(i) && (quoteType == BackTicks && l.peekN(i) != '`' ||
+			quoteType == DoubleQuote && l.peekN(i) != '"') {
 			i++
 		}
-		if !l.peekOk(i) || l.peekN(i) != '`' {
+		if !l.peekOk(i) || (quoteType == BackTicks && l.peekN(i) != '`') ||
+			(quoteType == DoubleQuote && l.peekN(i) != '"') {
 			return fmt.Errorf("unclosed quoted identifier: %s", l.slice(0, i))
 		}
 	}
 	slice := l.slice(0, i)
-	if !isUnquoted && l.isKeyword(strings.ToUpper(slice)) {
-		token.Kind = TokenKeyword
+	if quoteType == Unquoted && l.isKeyword(strings.ToUpper(slice)) {
+		token.Kind = TokenKindKeyword
 	} else {
-		token.Kind = TokenIdent
+		token.Kind = TokenKindIdent
 	}
 	token.Pos = Pos(l.current)
 	token.End = Pos(l.current + i)
 	token.String = slice
-	token.Unquoted = isUnquoted
+	token.QuoteType = quoteType
 	l.lastToken = token
 
 	l.skipN(i)
-	if isUnquoted {
+	if quoteType != Unquoted {
 		l.skipN(1)
 	}
 	return nil
@@ -183,12 +232,9 @@ func (l *Lexer) consumeMultiLineComment() {
 	l.skipN(i)
 }
 
-func (l *Lexer) consumeString(isSingleQuote bool) error {
+func (l *Lexer) consumeString() error {
 	i := 1
 	endChar := byte('\'')
-	if !isSingleQuote {
-		endChar = '"'
-	}
 	for l.peekOk(i) && l.peekN(i) != endChar {
 		i++
 	}
@@ -196,7 +242,7 @@ func (l *Lexer) consumeString(isSingleQuote bool) error {
 		return errors.New("invalid string")
 	}
 	l.lastToken = &Token{
-		Kind:   TokenString,
+		Kind:   TokenKindString,
 		String: l.slice(1, i),
 		Pos:    Pos(l.current + 1),
 		End:    Pos(l.current + i),
@@ -207,6 +253,10 @@ func (l *Lexer) consumeString(isSingleQuote bool) error {
 
 func (l *Lexer) skipComments() {
 	for !l.isEOF() {
+		l.skipSpace()
+		if !l.peekOk(0) {
+			return
+		}
 		switch l.peekN(0) {
 		case '-':
 			if l.peekOk(1) && l.peekN(1) == '-' {
@@ -242,9 +292,17 @@ func (l *Lexer) peekToken() (*Token, error) {
 	return token, nil
 }
 
+func (l *Lexer) hasPrecedenceToken(last *Token) bool {
+	return last != nil && (last.Kind == TokenKindIdent ||
+		last.Kind == TokenKindKeyword ||
+		last.Kind == TokenKindInt ||
+		last.Kind == TokenKindFloat ||
+		last.Kind == TokenKindString)
+}
+
 func (l *Lexer) consumeToken() error {
-	l.skipSpace()
 	// clear last token
+	lastToken := l.lastToken
 	l.lastToken = nil
 	l.skipComments()
 	l.skipSpace()
@@ -268,12 +326,13 @@ func (l *Lexer) consumeToken() error {
 		}
 
 	case '+', '-':
-		if l.peekOk(1) && IsDigit(l.peekN(1)) {
+		// hasPrecedenceToken is used to distinguish between unary and binary operators
+		if !l.hasPrecedenceToken(lastToken) && l.peekOk(1) && IsDigit(l.peekN(1)) {
 			return l.consumeNumber()
 		} else if l.peekOk(1) && l.peekN(1) == '>' {
 			l.lastToken = &Token{
 				String: l.slice(0, 2),
-				Kind:   TokenArrow,
+				Kind:   TokenKindArrow,
 				Pos:    Pos(l.current),
 				End:    Pos(l.current + 2),
 			}
@@ -282,17 +341,15 @@ func (l *Lexer) consumeToken() error {
 		}
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return l.consumeNumber()
-	case '`':
+	case '`', '$', '"':
 		return l.consumeIdent(Pos(l.current))
 	case '\'':
-		return l.consumeString(true)
-	case '"':
-		return l.consumeString(false)
+		return l.consumeString()
 	case ':':
 		if l.peekOk(1) && l.peekN(1) == ':' {
 			l.lastToken = &Token{
 				String: l.slice(0, 2),
-				Kind:   TokenCast,
+				Kind:   TokenKindDash,
 				Pos:    Pos(l.current),
 				End:    Pos(l.current + 2),
 			}
@@ -300,19 +357,14 @@ func (l *Lexer) consumeToken() error {
 			return nil
 		}
 	case '.':
-		// check if the next token is a number. If so, parse it as a float number
-		if l.peekOk(1) && IsDigit(l.peekN(1)) {
-			return l.consumeNumber()
+		l.lastToken = &Token{
+			String: l.slice(0, 1),
+			Kind:   TokenKindDot,
+			Pos:    Pos(l.current),
+			End:    Pos(l.current + 1),
 		}
-		// check if the previous lastToken is an Ident. If so, it's a field name.
-		if l.lastToken != nil && l.lastToken.Kind != TokenIdent {
-			return fmt.Errorf("'.' should be after an Ident, but got <%q>", l.lastToken.Kind)
-		}
-	}
-
-	// The subsequent lastToken after the dot should be an Ident.
-	if l.lastToken != nil && l.lastToken.Kind == "." && !IsIdentStart(l.peekN(0)) {
-		return fmt.Errorf("'.' should follow with an Ident, but got <%q>", l.lastToken.Kind)
+		l.skipN(1)
+		return nil
 	}
 
 	if IsIdentStart(l.peekN(0)) {

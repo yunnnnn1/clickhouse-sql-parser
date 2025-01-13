@@ -10,7 +10,7 @@ import (
 	clickhouse "github.com/AfterShip/clickhouse-sql-parser/parser"
 )
 
-const VERSION = "0.3.0"
+const VERSION = "0.3.8"
 const help = `
 Usage: clickhouse-sql-parser [YOUR SQL STRING] -f [YOUR SQL FILE] -format
 `
@@ -55,16 +55,17 @@ func main() {
 		inputBytes = []byte(os.Args[len(os.Args)-1])
 	}
 	parser := clickhouse.NewParser(string(inputBytes))
-	stmts, err := parser.ParseStatements()
+	stmts, err := parser.ParseStmts()
 	if err != nil {
-		panic(fmt.Sprintf("parse statements error: %s", err.Error()))
+		fmt.Printf("parse statements error: %s\n", err.Error())
+		os.Exit(1)
 	}
 	if !options.format { // print AST
 		bytes, _ := json.MarshalIndent(stmts, "", "  ") // nolint
 		fmt.Println(string(bytes))
 	} else { // format SQL
 		for _, stmt := range stmts {
-			fmt.Println(stmt.String(0))
+			fmt.Println(stmt.String())
 		}
 	}
 }

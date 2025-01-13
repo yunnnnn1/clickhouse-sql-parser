@@ -5,13 +5,13 @@
     "Name": {
       "Database": {
         "Name": "test",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 13,
         "NameEnd": 17
       },
       "Table": {
         "Name": "events_local",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 18,
         "NameEnd": 30
       }
@@ -33,22 +33,27 @@
           "NamePos": 82,
           "ColumnEnd": 92,
           "Name": {
-            "Name": "date",
-            "Unquoted": true,
-            "NamePos": 82,
-            "NameEnd": 86
+            "Ident": {
+              "Name": "date",
+              "QuoteType": 3,
+              "NamePos": 82,
+              "NameEnd": 86
+            },
+            "DotIdent": null
           },
           "Type": {
             "Name": {
               "Name": "Date",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 88,
               "NameEnd": 92
             }
           },
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -58,22 +63,27 @@
           "NamePos": 99,
           "ColumnEnd": 109,
           "Name": {
-            "Name": "f1",
-            "Unquoted": true,
-            "NamePos": 99,
-            "NameEnd": 101
+            "Ident": {
+              "Name": "f1",
+              "QuoteType": 3,
+              "NamePos": 99,
+              "NameEnd": 101
+            },
+            "DotIdent": null
           },
           "Type": {
             "Name": {
               "Name": "String",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 103,
               "NameEnd": 109
             }
           },
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -83,22 +93,27 @@
           "NamePos": 116,
           "ColumnEnd": 126,
           "Name": {
-            "Name": "f2",
-            "Unquoted": true,
-            "NamePos": 116,
-            "NameEnd": 118
+            "Ident": {
+              "Name": "f2",
+              "QuoteType": 3,
+              "NamePos": 116,
+              "NameEnd": 118
+            },
+            "DotIdent": null
           },
           "Type": {
             "Name": {
               "Name": "String",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 120,
               "NameEnd": 126
             }
           },
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -108,22 +123,27 @@
           "NamePos": 133,
           "ColumnEnd": 143,
           "Name": {
-            "Name": "f3",
-            "Unquoted": true,
-            "NamePos": 133,
-            "NameEnd": 135
+            "Ident": {
+              "Name": "f3",
+              "QuoteType": 3,
+              "NamePos": 133,
+              "NameEnd": 135
+            },
+            "DotIdent": null
           },
           "Type": {
             "Name": {
               "Name": "UInt64",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 137,
               "NameEnd": 143
             }
           },
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -147,17 +167,20 @@
           "HasDistinct": false,
           "Items": [
             {
-              "Name": "date",
-              "Unquoted": false,
-              "NamePos": 195,
-              "NameEnd": 199
+              "Expr": {
+                "Name": "date",
+                "QuoteType": 1,
+                "NamePos": 195,
+                "NameEnd": 199
+              },
+              "Alias": null
             }
           ]
         }
       },
       "SampleBy": null,
-      "TTLExprList": null,
-      "SettingsExprList": {
+      "TTL": null,
+      "Settings": {
         "SettingsPos": 226,
         "ListEnd": 259,
         "Items": [
@@ -165,7 +188,7 @@
             "SettingsPos": 235,
             "Name": {
               "Name": "index_granularity",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 235,
               "NameEnd": 252
             },
@@ -178,7 +201,7 @@
           }
         ]
       },
-      "OrderByListExpr": {
+      "OrderBy": {
         "OrderPos": 204,
         "ListEnd": 220,
         "Items": [
@@ -193,27 +216,35 @@
                 "HasDistinct": false,
                 "Items": [
                   {
-                    "Name": "f1",
-                    "Unquoted": false,
-                    "NamePos": 214,
-                    "NameEnd": 216
+                    "Expr": {
+                      "Name": "f1",
+                      "QuoteType": 1,
+                      "NamePos": 214,
+                      "NameEnd": 216
+                    },
+                    "Alias": null
                   },
                   {
-                    "Name": "f2",
-                    "Unquoted": false,
-                    "NamePos": 218,
-                    "NameEnd": 220
+                    "Expr": {
+                      "Name": "f2",
+                      "QuoteType": 1,
+                      "NamePos": 218,
+                      "NameEnd": 220
+                    },
+                    "Alias": null
                   }
                 ]
               },
               "ColumnArgList": null
             },
+            "Alias": null,
             "Direction": "None"
           }
         ]
       }
     },
     "SubQuery": null,
-    "HasTemporary": false
+    "HasTemporary": false,
+    "Comment": null
   }
 ]

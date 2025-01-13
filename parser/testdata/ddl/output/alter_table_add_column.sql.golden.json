@@ -5,13 +5,13 @@
     "TableIdentifier": {
       "Database": {
         "Name": "test",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 12,
         "NameEnd": 16
       },
       "Table": {
         "Name": "events_local",
-        "Unquoted": false,
+        "QuoteType": 1,
         "NamePos": 17,
         "NameEnd": 29
       }
@@ -32,22 +32,27 @@
           "NamePos": 70,
           "ColumnEnd": 79,
           "Name": {
-            "Name": "f1",
-            "Unquoted": false,
-            "NamePos": 70,
-            "NameEnd": 72
+            "Ident": {
+              "Name": "f1",
+              "QuoteType": 1,
+              "NamePos": 70,
+              "NameEnd": 72
+            },
+            "DotIdent": null
           },
           "Type": {
             "Name": {
               "Name": "String",
-              "Unquoted": false,
+              "QuoteType": 1,
               "NamePos": 73,
               "NameEnd": 79
             }
           },
           "NotNull": null,
           "Nullable": null,
-          "Property": null,
+          "DefaultExpr": null,
+          "MaterializedExpr": null,
+          "AliasExpr": null,
           "Codec": null,
           "TTL": null,
           "Comment": null,
@@ -57,7 +62,7 @@
         "After": {
           "Ident": {
             "Name": "f0",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 86,
             "NameEnd": 88
           },

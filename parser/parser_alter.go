@@ -8,7 +8,7 @@ import (
 func (p *Parser) parseAlterTable(pos Pos) (*AlterTable, error) {
 	alterTable := &AlterTable{
 		AlterPos:   pos,
-		AlterExprs: make([]AlterTableExpr, 0),
+		AlterExprs: make([]AlterTableClause, 0),
 	}
 	if err := p.consumeKeyword(KeywordTable); err != nil {
 		return nil, err
@@ -19,45 +19,46 @@ func (p *Parser) parseAlterTable(pos Pos) (*AlterTable, error) {
 		return nil, err
 	}
 	alterTable.TableIdentifier = tableIdentifier
-	onCluster, err := p.tryParseOnCluster(p.Pos())
+	onCluster, err := p.tryParseClusterClause(p.Pos())
 	if err != nil {
 		return nil, err
 	}
 	alterTable.OnCluster = onCluster
 
 	for !p.lexer.isEOF() {
-		var alterExpr AlterTableExpr
+		var alter AlterTableClause
 		switch {
 		case p.matchKeyword(KeywordAdd):
-			alterExpr, err = p.parseAlterTableAdd(p.Pos())
+			alter, err = p.parseAlterTableAdd(p.Pos())
 		case p.matchKeyword(KeywordDrop):
-			alterExpr, err = p.parseAlterTableDrop(p.Pos())
+			alter, err = p.parseAlterTableDrop(p.Pos())
 		case p.matchKeyword(KeywordAttach):
-			alterExpr, err = p.parseAlterTableAttachPartition(p.Pos())
+			alter, err = p.parseAlterTableAttachPartition(p.Pos())
 		case p.matchKeyword(KeywordDetach):
 			_ = p.lexer.consumeToken()
-			alterExpr, err = p.parseAlterTableDetachPartition(p.Pos())
+			alter, err = p.parseAlterTableDetachPartition(p.Pos())
 		case p.matchKeyword(KeywordFreeze):
-			alterExpr, err = p.parseAlterTableFreezePartition(p.Pos())
+			alter, err = p.parseAlterTableFreezePartition(p.Pos())
 		case p.matchKeyword(KeywordRemove):
-			alterExpr, err = p.parseAlterTableRemoveTTL(p.Pos())
+			alter, err = p.parseAlterTableRemoveTTL(p.Pos())
 		case p.matchKeyword(KeywordRename):
-			alterExpr, err = p.parseAlterTableRenameColumn(p.Pos())
+			alter, err = p.parseAlterTableRenameColumn(p.Pos())
 		case p.matchKeyword(KeywordClear):
-			alterExpr, err = p.parseAlterTableClear(p.Pos())
+			alter, err = p.parseAlterTableClear(p.Pos())
 		case p.matchKeyword(KeywordModify):
-			alterExpr, err = p.parseAlterTableModify(p.Pos())
+			alter, err = p.parseAlterTableModify(p.Pos())
 		case p.matchKeyword(KeywordReplace):
-			alterExpr, err = p.parseAlterTableReplacePartition(p.Pos())
-
+			alter, err = p.parseAlterTableReplacePartition(p.Pos())
+		case p.matchKeyword(KeywordMaterialize):
+			alter, err = p.parseAlterTableMaterialize(p.Pos())
 		default:
 			return nil, errors.New("expected token: ADD|DROP|ATTACH|DETACH|FREEZE|REMOVE|CLEAR")
 		}
 		if err != nil {
 			return nil, err
 		}
-		alterTable.AlterExprs = append(alterTable.AlterExprs, alterExpr)
-		if p.tryConsumeTokenKind(",") == nil {
+		alterTable.AlterExprs = append(alterTable.AlterExprs, alter)
+		if p.tryConsumeTokenKind(TokenKindComma) == nil {
 			break
 		}
 	}
@@ -69,7 +70,7 @@ func (p *Parser) parseAlterTable(pos Pos) (*AlterTable, error) {
 	return alterTable, nil
 }
 
-func (p *Parser) parseAlterTableAdd(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableAdd(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordAdd); err != nil {
 		return nil, err
 	}
@@ -79,8 +80,10 @@ func (p *Parser) parseAlterTableAdd(pos Pos) (AlterTableExpr, error) {
 		return p.parseAlterTableAddColumn(pos)
 	case p.matchKeyword(KeywordIndex):
 		return p.parseAlterTableAddIndex(pos)
+	case p.matchKeyword(KeywordProjection):
+		return p.parseAlterTableAddProjection(pos)
 	default:
-		return nil, errors.New("expected token: COLUMN|INDEX")
+		return nil, errors.New("expected token: COLUMN|INDEX|PROJECTION")
 	}
 }
 
@@ -94,7 +97,7 @@ func (p *Parser) parseAlterTableAddColumn(pos Pos) (*AlterTableAddColumn, error)
 		return nil, err
 	}
 
-	column, err := p.parseTableColumn(p.Pos())
+	column, err := p.parseTableColumnExpr(p.Pos())
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +151,106 @@ func (p *Parser) parseAlterTableAddIndex(pos Pos) (*AlterTableAddIndex, error) {
 	}, nil
 }
 
+func (p *Parser) parseProjectionOrderBy(pos Pos) (*ProjectionOrderByClause, error) {
+	if err := p.consumeKeyword(KeywordOrder); err != nil {
+		return nil, err
+	}
+	if err := p.consumeKeyword(KeywordBy); err != nil {
+		return nil, err
+	}
+	columns, err := p.parseColumnExprList(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	return &ProjectionOrderByClause{
+		OrderByPos: pos,
+		Columns:    columns,
+	}, nil
+}
+
+func (p *Parser) parseProjectionSelect(pos Pos) (*ProjectionSelectStmt, error) {
+	if _, err := p.consumeTokenKind(TokenKindLParen); err != nil {
+		return nil, err
+	}
+	with, err := p.tryParseWithClause(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	if err := p.consumeKeyword(KeywordSelect); err != nil {
+		return nil, err
+	}
+	columns, err := p.parseColumnExprList(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	groupBy, err := p.tryParseGroupByClause(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	orderBy, err := p.parseProjectionOrderBy(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	rightParen, err := p.consumeTokenKind(TokenKindRParen)
+	if err != nil {
+		return nil, err
+	}
+	return &ProjectionSelectStmt{
+		LeftParenPos:  pos,
+		RightParenPos: rightParen.Pos,
+		With:          with,
+		SelectColumns: columns,
+		GroupBy:       groupBy,
+		OrderBy:       orderBy,
+	}, nil
+}
+
+func (p *Parser) parseTableProjection(pos Pos) (*TableProjection, error) {
+	identifier, err := p.ParseNestedIdentifier(pos)
+	if err != nil {
+		return nil, err
+	}
+	selectExpr, err := p.parseProjectionSelect(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	return &TableProjection{
+		ProjectionPos: pos,
+		Identifier:    identifier,
+		Select:        selectExpr,
+	}, nil
+}
+
+func (p *Parser) parseAlterTableAddProjection(pos Pos) (*AlterTableAddProjection, error) {
+	if err := p.consumeKeyword(KeywordProjection); err != nil {
+		return nil, err
+	}
+
+	ifNotExists, err := p.tryParseIfNotExists()
+	if err != nil {
+		return nil, err
+	}
+	tableProjection, err := p.parseTableProjection(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	statementEnd := tableProjection.End()
+	after, err := p.tryParseAfterClause()
+	if err != nil {
+		return nil, err
+	}
+	if after != nil {
+		statementEnd = after.End()
+	}
+	return &AlterTableAddProjection{
+		AddPos:          pos,
+		StatementEnd:    statementEnd,
+		IfNotExists:     ifNotExists,
+		TableProjection: tableProjection,
+		After:           after,
+	}, nil
+}
+
 func (p *Parser) parseTableIndex(pos Pos) (*TableIndex, error) {
 	name, err := p.ParseNestedIdentifier(p.Pos())
 	if err != nil {
@@ -184,66 +287,61 @@ func (p *Parser) parseTableIndex(pos Pos) (*TableIndex, error) {
 	}, nil
 }
 
-func (p *Parser) parseAlterTableDrop(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableDrop(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordDrop); err != nil {
 		return nil, err
 	}
 
 	switch {
-	case p.matchKeyword(KeywordColumn):
-		return p.parseAlterTableDropColumn(pos)
-	case p.matchKeyword(KeywordIndex):
-		return p.parseAlterTableDropIndex(pos)
-	case p.matchKeyword(KeywordDetached):
-		_ = p.lexer.consumeToken()
-		return p.parseAlterTableDetachPartition(pos)
-	case p.matchKeyword(KeywordPartition):
+	case p.matchKeyword(KeywordColumn), p.matchKeyword(KeywordIndex), p.matchKeyword(KeywordProjection):
+		return p.parseAlterTableDropClause(pos)
+	case p.matchKeyword(KeywordDetached), p.matchKeyword(KeywordPartition):
 		return p.parseAlterTableDropPartition(pos)
 	default:
-		return nil, errors.New("expected keyword: COLUMN|INDEX|DETACH")
+		return nil, errors.New("expected keyword: COLUMN|INDEX|PROJECTION|DETACHED|PARTITION")
 	}
 }
 
 // Syntax: ALTER TABLE DETACH partitionClause
-func (p *Parser) parseAlterTableDetachPartition(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableDetachPartition(pos Pos) (AlterTableClause, error) {
 	partitionPos := p.Pos()
 	if err := p.consumeKeyword(KeywordPartition); err != nil {
 		return nil, err
 	}
-	partitionExpr := &PartitionExpr{
+	partition := &PartitionClause{
 		PartitionPos: partitionPos,
 	}
 	expr, err := p.parseExpr(p.Pos())
 	if err != nil {
 		return nil, err
 	}
-	partitionExpr.Expr = expr
+	partition.Expr = expr
 
-	settings, err := p.tryParseSettingsExprList(p.Pos())
+	settings, err := p.tryParseSettingsClause(p.Pos())
 	if err != nil {
 		return nil, err
 	}
 
 	return &AlterTableDetachPartition{
 		DetachPos: pos,
-		Partition: partitionExpr,
+		Partition: partition,
 		Settings:  settings,
 	}, nil
 }
 
-func (p *Parser) tryParsePartitionExpr(pos Pos) (*PartitionExpr, error) {
+func (p *Parser) tryParsePartitionClause(pos Pos) (*PartitionClause, error) {
 	if !p.matchKeyword(KeywordPartition) {
 		return nil, nil // nolint
 	}
-	return p.parsePartitionExpr(pos)
+	return p.parsePartitionClause(pos)
 }
 
-func (p *Parser) parsePartitionExpr(pos Pos) (*PartitionExpr, error) {
+func (p *Parser) parsePartitionClause(pos Pos) (*PartitionClause, error) {
 	if err := p.consumeKeyword(KeywordPartition); err != nil {
 		return nil, err
 	}
 
-	partitionExpr := &PartitionExpr{
+	partition := &PartitionClause{
 		PartitionPos: pos,
 	}
 	if p.tryConsumeKeyword(KeywordId) != nil {
@@ -251,31 +349,31 @@ func (p *Parser) parsePartitionExpr(pos Pos) (*PartitionExpr, error) {
 		if err != nil {
 			return nil, err
 		}
-		partitionExpr.ID = id
+		partition.ID = id
 	} else if p.tryConsumeKeyword(KeywordAll) != nil {
-		partitionExpr.All = true
+		partition.All = true
 	} else {
 		expr, err := p.parseExpr(p.Pos())
 		if err != nil {
 			return nil, err
 		}
-		partitionExpr.Expr = expr
+		partition.Expr = expr
 	}
-	return partitionExpr, nil
+	return partition, nil
 }
 
 // Syntax: ALTER TABLE ATTACH partitionClause (FROM tableIdentifier)?
-func (p *Parser) parseAlterTableAttachPartition(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableAttachPartition(pos Pos) (AlterTableClause, error) {
 	alterTable := &AlterTableAttachPartition{AttachPos: pos}
 
 	if err := p.consumeKeyword(KeywordAttach); err != nil {
 		return nil, err
 	}
-	partitionExpr, err := p.parsePartitionExpr(p.Pos())
+	partition, err := p.parsePartitionClause(p.Pos())
 	if err != nil {
 		return nil, err
 	}
-	alterTable.Partition = partitionExpr
+	alterTable.Partition = partition
 	// FROM [db.]table?
 	if p.tryConsumeKeyword(KeywordFrom) != nil {
 		tableIdentifier, err := p.parseTableIdentifier(p.Pos())
@@ -287,10 +385,19 @@ func (p *Parser) parseAlterTableAttachPartition(pos Pos) (AlterTableExpr, error)
 	return alterTable, nil
 }
 
-func (p *Parser) parseAlterTableDropColumn(pos Pos) (AlterTableExpr, error) {
-	if err := p.consumeKeyword(KeywordColumn); err != nil {
-		return nil, err
+func (p *Parser) parseAlterTableDropClause(pos Pos) (AlterTableClause, error) {
+	var kind string
+	switch {
+	case p.matchKeyword(KeywordColumn):
+		kind = KeywordColumn
+	case p.matchKeyword(KeywordIndex):
+		kind = KeywordIndex
+	case p.matchKeyword(KeywordProjection):
+		kind = KeywordProjection
+	default:
+		return nil, fmt.Errorf("expected token: COLUMN|INDEX|PROJECTION, but got %s", p.lastTokenKind())
 	}
+	_ = p.lexer.consumeToken()
 
 	ifExists, err := p.tryParseIfExists()
 	if err != nil {
@@ -302,33 +409,25 @@ func (p *Parser) parseAlterTableDropColumn(pos Pos) (AlterTableExpr, error) {
 		return nil, err
 	}
 
-	return &AlterTableDropColumn{
-		DropPos:    pos,
-		ColumnName: name,
-		IfExists:   ifExists,
-	}, nil
-}
-
-func (p *Parser) parseAlterTableDropIndex(pos Pos) (AlterTableExpr, error) {
-	if err := p.consumeKeyword(KeywordIndex); err != nil {
-		return nil, err
+	if kind == KeywordProjection {
+		return &AlterTableDropProjection{
+			DropPos:        pos,
+			ProjectionName: name,
+			IfExists:       ifExists,
+		}, nil
+	} else if kind == KeywordColumn {
+		return &AlterTableDropColumn{
+			DropPos:    pos,
+			ColumnName: name,
+			IfExists:   ifExists,
+		}, nil
+	} else {
+		return &AlterTableDropIndex{
+			DropPos:   pos,
+			IndexName: name,
+			IfExists:  ifExists,
+		}, nil
 	}
-
-	ifExists, err := p.tryParseIfExists()
-	if err != nil {
-		return nil, err
-	}
-
-	name, err := p.ParseNestedIdentifier(p.Pos())
-	if err != nil {
-		return nil, err
-	}
-
-	return &AlterTableDropIndex{
-		DropPos:   pos,
-		IndexName: name,
-		IfExists:  ifExists,
-	}, nil
 }
 
 func (p *Parser) tryParseAfterClause() (*NestedIdentifier, error) {
@@ -340,27 +439,39 @@ func (p *Parser) tryParseAfterClause() (*NestedIdentifier, error) {
 }
 
 // Syntax: ALTER TABLE DROP partitionClause
-func (p *Parser) parseAlterTableDropPartition(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableDropPartition(pos Pos) (AlterTableClause, error) {
+	var hasDetached bool
+	if p.matchKeyword(KeywordDetached) {
+		_ = p.lexer.consumeToken()
+		hasDetached = true
+	}
 	partitionPos := p.Pos()
 	if err := p.consumeKeyword(KeywordPartition); err != nil {
 		return nil, err
 	}
-	partitionExpr := &PartitionExpr{
+	partition := &PartitionClause{
 		PartitionPos: partitionPos,
 	}
 	expr, err := p.parseExpr(p.Pos())
 	if err != nil {
 		return nil, err
 	}
-	partitionExpr.Expr = expr
+	partition.Expr = expr
+
+	settings, err := p.tryParseSettingsClause(p.Pos())
+	if err != nil {
+		return nil, err
+	}
 
 	return &AlterTableDropPartition{
-		DropPos:   pos,
-		Partition: partitionExpr,
+		DropPos:     pos,
+		Partition:   partition,
+		HasDetached: hasDetached,
+		Settings:    settings,
 	}, nil
 }
 
-func (p *Parser) parseAlterTableFreezePartition(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableFreezePartition(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordFreeze); err != nil {
 		return nil, err
 	}
@@ -369,18 +480,18 @@ func (p *Parser) parseAlterTableFreezePartition(pos Pos) (AlterTableExpr, error)
 		StatementEnd: p.Pos(),
 	}
 	if p.matchKeyword(KeywordPartition) {
-		partitionExpr, err := p.parsePartitionExpr(p.Pos())
+		partition, err := p.parsePartitionClause(p.Pos())
 		if err != nil {
 			return nil, err
 		}
-		alterTable.Partition = partitionExpr
-		alterTable.StatementEnd = partitionExpr.End()
+		alterTable.Partition = partition
+		alterTable.StatementEnd = partition.End()
 	}
 
 	return alterTable, nil
 }
 
-func (p *Parser) parseAlterTableRemoveTTL(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableRemoveTTL(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordRemove); err != nil {
 		return nil, err
 	}
@@ -395,98 +506,79 @@ func (p *Parser) parseAlterTableRemoveTTL(pos Pos) (AlterTableExpr, error) {
 	}, nil
 }
 
-func (p *Parser) parseAlterTableClear(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableClear(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordClear); err != nil {
 		return nil, err
 	}
+	return p.parseAlterTableClearClause(pos)
+}
 
+// Syntax: ALTER TABLE CLEAR COLUMN|INDEX|PROJECTION (IF EXISTS)? nestedIdentifier (IN partitionClause)?
+func (p *Parser) parseAlterTableClearClause(pos Pos) (AlterTableClause, error) {
+	var kind string
 	switch {
 	case p.matchKeyword(KeywordColumn):
-		return p.parseAlterTableClearColumn(pos)
+		kind = KeywordColumn
 	case p.matchKeyword(KeywordIndex):
-		return p.parseAlterTableClearIndex(pos)
-
+		kind = KeywordIndex
+	case p.matchKeyword(KeywordProjection):
+		kind = KeywordProjection
 	default:
-		return nil, errors.New("expected token: COLUMN|INDEX|PROJECTION")
+		return nil, fmt.Errorf("expected keyword: COLUMN|INDEX|PROJECTION, but got %q", p.lastTokenKind())
 	}
-}
-
-// Syntax: ALTER TABLE CLEAR COLUMN (IF EXISTS)? nestedIdentifier (IN partitionClause)?
-func (p *Parser) parseAlterTableClearColumn(pos Pos) (AlterTableExpr, error) {
-	if err := p.consumeKeyword(KeywordColumn); err != nil {
-		return nil, err
-	}
+	_ = p.lexer.consumeToken()
 
 	ifExists, err := p.tryParseIfExists()
 	if err != nil {
 		return nil, err
 	}
 
-	columnName, err := p.ParseNestedIdentifier(p.Pos())
+	name, err := p.ParseNestedIdentifier(p.Pos())
 	if err != nil {
 		return nil, err
 	}
-	statementEnd := columnName.End()
+	statementEnd := name.End()
 
-	var partitionExpr *PartitionExpr
+	var partition *PartitionClause
 	if p.tryConsumeKeyword(KeywordIn) != nil {
-		partitionExpr, err = p.tryParsePartitionExpr(p.Pos())
+		partition, err = p.tryParsePartitionClause(p.Pos())
 		if err != nil {
 			return nil, err
 		}
-		if partitionExpr != nil {
-			statementEnd = partitionExpr.End()
+		if partition != nil {
+			statementEnd = partition.End()
 		}
 	}
 
-	return &AlterTableClearColumn{
-		ClearPos:      pos,
-		StatementEnd:  statementEnd,
-		IfExists:      ifExists,
-		ColumnName:    columnName,
-		PartitionExpr: partitionExpr,
-	}, nil
-}
-
-// Syntax: ALTER TABLE CLEAR INDEX (IF EXISTS)? nestedIdentifier (IN partitionClause)?
-func (p *Parser) parseAlterTableClearIndex(pos Pos) (AlterTableExpr, error) {
-	if err := p.consumeKeyword(KeywordIndex); err != nil {
-		return nil, err
+	if kind == KeywordProjection {
+		return &AlterTableClearProjection{
+			ClearPos:       pos,
+			StatementEnd:   statementEnd,
+			IfExists:       ifExists,
+			ProjectionName: name,
+			PartitionExpr:  partition,
+		}, nil
+	} else if kind == KeywordColumn {
+		return &AlterTableClearColumn{
+			ClearPos:      pos,
+			StatementEnd:  statementEnd,
+			IfExists:      ifExists,
+			ColumnName:    name,
+			PartitionExpr: partition,
+		}, nil
+	} else {
+		return &AlterTableClearIndex{
+			ClearPos:      pos,
+			StatementEnd:  statementEnd,
+			IfExists:      ifExists,
+			IndexName:     name,
+			PartitionExpr: partition,
+		}, nil
 	}
-
-	ifExists, err := p.tryParseIfExists()
-	if err != nil {
-		return nil, err
-	}
-
-	indexName, err := p.ParseNestedIdentifier(p.Pos())
-	if err != nil {
-		return nil, err
-	}
-	statementEnd := indexName.End()
-
-	var partitionExpr *PartitionExpr
-	if p.tryConsumeKeyword(KeywordIn) != nil {
-		partitionExpr, err = p.tryParsePartitionExpr(p.Pos())
-		if err != nil {
-			return nil, err
-		}
-		if partitionExpr != nil {
-			statementEnd = partitionExpr.End()
-		}
-	}
-
-	return &AlterTableClearIndex{
-		ClearPos:      pos,
-		StatementEnd:  statementEnd,
-		IfExists:      ifExists,
-		IndexName:     indexName,
-		PartitionExpr: partitionExpr,
-	}, nil
 }
 
 // Syntax: ALTER TABLE RENAME COLUMN (IF EXISTS)? nestedIdentifier TO nestedIdentifier
-func (p *Parser) parseAlterTableRenameColumn(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableRenameColumn(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordRename); err != nil {
 		return nil, err
 	}
@@ -522,7 +614,7 @@ func (p *Parser) parseAlterTableRenameColumn(pos Pos) (AlterTableExpr, error) {
 	}, nil
 }
 
-func (p *Parser) parseAlterTableModify(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableModify(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordModify); err != nil {
 		return nil, err
 	}
@@ -549,7 +641,7 @@ func (p *Parser) parseAlterTableModify(pos Pos) (AlterTableExpr, error) {
 }
 
 // syntax: MODIFY COLUMN (IF EXISTS)? tableColumnDfnt
-func (p *Parser) parseAlterTableModifyColumn(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableModifyColumn(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordColumn); err != nil {
 		return nil, err
 	}
@@ -560,7 +652,7 @@ func (p *Parser) parseAlterTableModifyColumn(pos Pos) (AlterTableExpr, error) {
 	}
 
 	// at least parse out column name
-	column, err := p.parseTableColumn(p.Pos())
+	column, err := p.parseTableColumnExpr(p.Pos())
 	if err != nil {
 		return nil, err
 	}
@@ -602,12 +694,12 @@ func (p *Parser) tryParseRemovePropertyTypeExpr(pos Pos) (*RemovePropertyType, e
 	}, nil
 }
 
-func (p *Parser) parseAlterTableReplacePartition(pos Pos) (AlterTableExpr, error) {
+func (p *Parser) parseAlterTableReplacePartition(pos Pos) (AlterTableClause, error) {
 	if err := p.consumeKeyword(KeywordReplace); err != nil {
 		return nil, err
 	}
 
-	partitionExpr, err := p.parsePartitionExpr(p.Pos())
+	partition, err := p.parsePartitionClause(p.Pos())
 	if err != nil {
 		return nil, err
 	}
@@ -623,7 +715,57 @@ func (p *Parser) parseAlterTableReplacePartition(pos Pos) (AlterTableExpr, error
 
 	return &AlterTableReplacePartition{
 		ReplacePos: pos,
-		Partition:  partitionExpr,
+		Partition:  partition,
 		Table:      table,
+	}, nil
+}
+
+func (p *Parser) parseAlterTableMaterialize(pos Pos) (AlterTableClause, error) {
+	if err := p.consumeKeyword(KeywordMaterialize); err != nil {
+		return nil, err
+	}
+	var kind string
+	switch {
+	case p.matchKeyword(KeywordIndex):
+		kind = KeywordIndex
+	case p.matchKeyword(KeywordProjection):
+		kind = KeywordProjection
+	default:
+		return nil, fmt.Errorf("expected keyword: INDEX|PROJECTION, but got %q", p.lastTokenKind())
+	}
+	_ = p.lexer.consumeToken()
+
+	ifExists, err := p.tryParseIfExists()
+	if err != nil {
+		return nil, err
+	}
+	name, err := p.ParseNestedIdentifier(p.Pos())
+	if err != nil {
+		return nil, err
+	}
+	statementEnd := name.End()
+	var partition *PartitionClause
+	if p.tryConsumeKeyword(KeywordIn) != nil {
+		partition, err = p.tryParsePartitionClause(p.Pos())
+		if err != nil {
+			return nil, err
+		}
+		statementEnd = partition.End()
+	}
+	if kind == KeywordIndex {
+		return &AlterTableMaterializeIndex{
+			MaterializedPos: pos,
+			StatementEnd:    statementEnd,
+			IfExists:        ifExists,
+			IndexName:       name,
+			Partition:       partition,
+		}, nil
+	}
+	return &AlterTableMaterializeProjection{
+		MaterializedPos: pos,
+		StatementEnd:    statementEnd,
+		IfExists:        ifExists,
+		ProjectionName:  name,
+		Partition:       partition,
 	}, nil
 }

@@ -4,39 +4,44 @@
     "StatementEnd": 43,
     "With": null,
     "Top": null,
-    "SelectColumns": {
-      "ListPos": 7,
-      "ListEnd": 19,
-      "HasDistinct": false,
-      "Items": [
-        {
+    "SelectItems": [
+      {
+        "Expr": {
           "Name": "replica_name",
-          "Unquoted": false,
+          "QuoteType": 1,
           "NamePos": 7,
           "NameEnd": 19
-        }
-      ]
-    },
+        },
+        "Modifiers": [],
+        "Alias": null
+      }
+    ],
     "From": {
       "FromPos": 20,
       "Expr": {
-        "TablePos": 25,
-        "TableEnd": 43,
-        "Alias": null,
-        "Expr": {
-          "Database": {
-            "Name": "system",
-            "Unquoted": false,
-            "NamePos": 25,
-            "NameEnd": 31
+        "Table": {
+          "TablePos": 25,
+          "TableEnd": 43,
+          "Alias": null,
+          "Expr": {
+            "Database": {
+              "Name": "system",
+              "QuoteType": 1,
+              "NamePos": 25,
+              "NameEnd": 31
+            },
+            "Table": {
+              "Name": "ha_replicas",
+              "QuoteType": 1,
+              "NamePos": 32,
+              "NameEnd": 43
+            }
           },
-          "Table": {
-            "Name": "ha_replicas",
-            "Unquoted": false,
-            "NamePos": 32,
-            "NameEnd": 43
-          }
-        }
+          "HasFinal": false
+        },
+        "StatementEnd": 43,
+        "SampleRatio": null,
+        "HasFinal": false
       }
     },
     "ArrayJoin": null,
@@ -50,45 +55,51 @@
     "LimitBy": null,
     "Limit": null,
     "Settings": null,
+    "Format": null,
     "UnionAll": null,
     "UnionDistinct": {
       "SelectPos": 59,
-      "StatementEnd": 109,
+      "StatementEnd": 121,
       "With": null,
       "Top": null,
-      "SelectColumns": {
-        "ListPos": 66,
-        "ListEnd": 78,
-        "HasDistinct": false,
-        "Items": [
-          {
+      "SelectItems": [
+        {
+          "Expr": {
             "Name": "replica_name",
-            "Unquoted": false,
+            "QuoteType": 1,
             "NamePos": 66,
             "NameEnd": 78
-          }
-        ]
-      },
+          },
+          "Modifiers": [],
+          "Alias": null
+        }
+      ],
       "From": {
         "FromPos": 79,
         "Expr": {
-          "TablePos": 84,
-          "TableEnd": 109,
-          "Alias": null,
-          "Expr": {
-            "Database": {
-              "Name": "system",
-              "Unquoted": false,
-              "NamePos": 84,
-              "NameEnd": 90
+          "Table": {
+            "TablePos": 84,
+            "TableEnd": 109,
+            "Alias": null,
+            "Expr": {
+              "Database": {
+                "Name": "system",
+                "QuoteType": 1,
+                "NamePos": 84,
+                "NameEnd": 90
+              },
+              "Table": {
+                "Name": "ha_unique_replicas",
+                "QuoteType": 1,
+                "NamePos": 91,
+                "NameEnd": 109
+              }
             },
-            "Table": {
-              "Name": "ha_unique_replicas",
-              "Unquoted": false,
-              "NamePos": 91,
-              "NameEnd": 109
-            }
-          }
+            "HasFinal": false
+          },
+          "StatementEnd": 109,
+          "SampleRatio": null,
+          "HasFinal": false
         }
       },
       "ArrayJoin": null,
@@ -102,6 +113,15 @@
       "LimitBy": null,
       "Limit": null,
       "Settings": null,
+      "Format": {
+        "FormatPos": 110,
+        "Format": {
+          "Name": "JSON",
+          "QuoteType": 1,
+          "NamePos": 117,
+          "NameEnd": 121
+        }
+      },
       "UnionAll": null,
       "UnionDistinct": null,
       "Except": null

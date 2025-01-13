@@ -10,6 +10,7 @@ const (
 	KeywordAnd          = "AND"
 	KeywordAnti         = "ANTI"
 	KeywordAny          = "ANY"
+	KeywordApply        = "APPLY"
 	KeywordArray        = "ARRAY"
 	KeywordAs           = "AS"
 	KeywordAsc          = "ASC"
@@ -69,6 +70,7 @@ const (
 	KeywordExplain      = "EXPLAIN"
 	KeywordExpression   = "EXPRESSION"
 	KeywordExtract      = "EXTRACT"
+	KeywordFalse        = "FALSE"
 	KeywordFetches      = "FETCHES"
 	KeywordFileSystem   = "FILESYSTEM"
 	KeywordFinal        = "FINAL"
@@ -103,6 +105,7 @@ const (
 	KeywordIs           = "IS"
 	KeywordIs_object_id = "IS_OBJECT_ID"
 	KeywordJoin         = "JOIN"
+	KeywordJSON         = "JSON"
 	KeywordKey          = "KEY"
 	KeywordKill         = "KILL"
 	KeywordLast         = "LAST"
@@ -156,6 +159,7 @@ const (
 	KeywordQuota        = "QUOTA"
 	KeywordRange        = "RANGE"
 	KeywordRefresh      = "REFRESH"
+	KeywordRegexp       = "REGEXP"
 	KeywordReload       = "RELOAD"
 	KeywordRemove       = "REMOVE"
 	KeywordRename       = "RENAME"
@@ -178,6 +182,7 @@ const (
 	KeywordSettings     = "SETTINGS"
 	KeywordShow         = "SHOW"
 	KeywordShutdown     = "SHUTDOWN"
+	KeywordSkip         = "SKIP"
 	KeywordSource       = "SOURCE"
 	KeywordStart        = "START"
 	KeywordStop         = "STOP"
@@ -198,6 +203,7 @@ const (
 	KeywordTotals       = "TOTALS"
 	KeywordTrailing     = "TRAILING"
 	KeywordTrim         = "TRIM"
+	KeywordTrue         = "TRUE"
 	KeywordTruncate     = "TRUNCATE"
 	KeywordTtl          = "TTL"
 	KeywordType         = "TYPE"
@@ -231,6 +237,7 @@ var keywords = NewSet(
 	KeywordAnd,
 	KeywordAnti,
 	KeywordAny,
+	KeywordApply,
 	KeywordArray,
 	KeywordAs,
 	KeywordAsc,
@@ -290,6 +297,7 @@ var keywords = NewSet(
 	KeywordExplain,
 	KeywordExpression,
 	KeywordExtract,
+	KeywordFalse,
 	KeywordFetches,
 	KeywordFileSystem,
 	KeywordFinal,
@@ -324,6 +332,7 @@ var keywords = NewSet(
 	KeywordIs,
 	KeywordIs_object_id,
 	KeywordJoin,
+	KeywordJSON,
 	KeywordKey,
 	KeywordKill,
 	KeywordLast,
@@ -376,6 +385,8 @@ var keywords = NewSet(
 	KeywordQueues,
 	KeywordQuota,
 	KeywordRange,
+	KeywordRefresh,
+	KeywordRegexp,
 	KeywordReload,
 	KeywordRemove,
 	KeywordRename,
@@ -398,6 +409,7 @@ var keywords = NewSet(
 	KeywordSettings,
 	KeywordShow,
 	KeywordShutdown,
+	KeywordSkip,
 	KeywordSource,
 	KeywordStart,
 	KeywordStop,
@@ -418,6 +430,7 @@ var keywords = NewSet(
 	KeywordTotals,
 	KeywordTrailing,
 	KeywordTrim,
+	KeywordTrue,
 	KeywordTruncate,
 	KeywordTtl,
 	KeywordType,
