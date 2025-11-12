@@ -25,7 +25,13 @@
         "Literal": "default_cluster"
       }
     },
+    "Refresh": null,
+    "RandomizeFor": null,
+    "DependsOn": null,
+    "Settings": null,
+    "HasAppend": false,
     "Engine": null,
+    "HasEmpty": false,
     "Destination": {
       "ToPos": 89,
       "TableIdentifier": {
@@ -51,6 +57,8 @@
         "StatementEnd": 635,
         "With": null,
         "Top": null,
+        "HasDistinct": false,
+        "DistinctOn": null,
         "SelectItems": [
           {
             "Expr": {
@@ -522,24 +530,26 @@
           "WherePos": 606,
           "Expr": {
             "LeftExpr": {
-              "Database": {
-                "Name": "db",
-                "QuoteType": 1,
-                "NamePos": 612,
-                "NameEnd": 614
-              },
-              "Table": {
-                "Name": "table",
-                "QuoteType": 1,
-                "NamePos": 615,
-                "NameEnd": 620
-              },
-              "Column": {
-                "Name": "event",
-                "QuoteType": 1,
-                "NamePos": 621,
-                "NameEnd": 626
-              }
+              "Fields": [
+                {
+                  "Name": "db",
+                  "QuoteType": 1,
+                  "NamePos": 612,
+                  "NameEnd": 614
+                },
+                {
+                  "Name": "table",
+                  "QuoteType": 1,
+                  "NamePos": 615,
+                  "NameEnd": 620
+                },
+                {
+                  "Name": "event",
+                  "QuoteType": 1,
+                  "NamePos": 621,
+                  "NameEnd": 626
+                }
+              ]
             },
             "Operation": "=",
             "RightExpr": {
@@ -565,6 +575,8 @@
       }
     },
     "Populate": false,
-    "Comment": null
+    "Comment": null,
+    "Definer": null,
+    "SQLSecurity": ""
   }
 ]

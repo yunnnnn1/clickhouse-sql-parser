@@ -2,6 +2,7 @@
   {
     "CreatePos": 0,
     "StatementEnd": 259,
+    "OrReplace": false,
     "Name": {
       "Database": {
         "Name": "test",
@@ -238,9 +239,11 @@
               "ColumnArgList": null
             },
             "Alias": null,
-            "Direction": "None"
+            "Direction": "",
+            "Fill": null
           }
-        ]
+        ],
+        "Interpolate": null
       }
     },
     "SubQuery": null,

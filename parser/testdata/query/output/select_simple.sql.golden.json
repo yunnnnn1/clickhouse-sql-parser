@@ -4,6 +4,8 @@
     "StatementEnd": 277,
     "With": null,
     "Top": null,
+    "HasDistinct": false,
+    "DistinctOn": null,
     "SelectItems": [
       {
         "Expr": {
@@ -119,9 +121,11 @@
                     "NameEnd": 85
                   },
                   "Alias": null,
-                  "Direction": "ASC"
+                  "Direction": "ASC",
+                  "Fill": null
                 }
-              ]
+              ],
+              "Interpolate": null
             },
             "Frame": null
           }
@@ -357,6 +361,7 @@
     },
     "GroupBy": {
       "GroupByPos": 239,
+      "GroupByEnd": 258,
       "AggregateType": "",
       "Expr": {
         "ListPos": 248,

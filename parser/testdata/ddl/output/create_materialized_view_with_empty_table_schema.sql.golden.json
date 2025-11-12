@@ -26,6 +26,11 @@
         "NameEnd": 59
       }
     },
+    "Refresh": null,
+    "RandomizeFor": null,
+    "DependsOn": null,
+    "Settings": null,
+    "HasAppend": false,
     "Engine": {
       "EnginePos": 60,
       "EngineEnd": 190,
@@ -132,11 +137,14 @@
               "ColumnArgList": null
             },
             "Alias": null,
-            "Direction": "None"
+            "Direction": "",
+            "Fill": null
           }
-        ]
+        ],
+        "Interpolate": null
       }
     },
+    "HasEmpty": false,
     "Destination": null,
     "SubQuery": {
       "HasParen": false,
@@ -145,6 +153,8 @@
         "StatementEnd": 460,
         "With": null,
         "Top": null,
+        "HasDistinct": false,
+        "DistinctOn": null,
         "SelectItems": [
           {
             "Expr": {
@@ -239,6 +249,8 @@
                     "StatementEnd": 433,
                     "With": null,
                     "Top": null,
+                    "HasDistinct": false,
+                    "DistinctOn": null,
                     "SelectItems": [
                       {
                         "Expr": {
@@ -359,9 +371,11 @@
                                     }
                                   },
                                   "Alias": null,
-                                  "Direction": "None"
+                                  "Direction": "",
+                                  "Fill": null
                                 }
-                              ]
+                              ],
+                              "Interpolate": null
                             },
                             "Frame": null
                           }
@@ -542,6 +556,8 @@
       }
     },
     "Populate": true,
-    "Comment": null
+    "Comment": null,
+    "Definer": null,
+    "SQLSecurity": ""
   }
 ]

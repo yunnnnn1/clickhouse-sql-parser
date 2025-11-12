@@ -2,6 +2,7 @@
   {
     "InsertPos": 0,
     "Format": null,
+    "HasTableKeyword": false,
     "Table": {
       "Database": {
         "Name": "test",
@@ -23,6 +24,8 @@
       "StatementEnd": 103,
       "With": null,
       "Top": null,
+      "HasDistinct": false,
+      "DistinctOn": null,
       "SelectItems": [
         {
           "Expr": {

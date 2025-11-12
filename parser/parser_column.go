@@ -25,7 +25,7 @@ const (
 )
 
 func (p *Parser) tryParseColumnComment(pos Pos) (*StringLiteral, error) {
-	if p.tryConsumeKeyword(KeywordComment) == nil {
+	if !p.tryConsumeKeywords(KeywordComment) {
 		return nil, nil // nolint
 	}
 	return p.parseString(pos)
@@ -41,6 +41,8 @@ func (p *Parser) getNextPrecedence() int {
 		return PrecedenceIs
 	case p.matchKeyword(KeywordNot):
 		return PrecedenceNot
+	case p.matchTokenKind(TokenKindDot):
+		return PrecedenceDot
 	case p.matchTokenKind(TokenKindDash):
 		return PrecedenceDoubleColon
 	case p.matchTokenKind(TokenKindSingleEQ), p.matchTokenKind(TokenKindLT), p.matchTokenKind(TokenKindLE),
@@ -101,7 +103,7 @@ func (p *Parser) parseInfix(expr Expr, precedence int) (Expr, error) {
 			if err != nil {
 				return nil, err
 			}
-			if _, err = p.consumeTokenKind(TokenKindLParen); err != nil {
+			if err := p.expectTokenKind(TokenKindLParen); err != nil {
 				return nil, err
 			}
 			// it's a tuple type definition after "::" operator
@@ -129,7 +131,7 @@ func (p *Parser) parseInfix(expr Expr, precedence int) (Expr, error) {
 		return p.parseBetweenClause(expr)
 	case p.matchKeyword(KeywordGlobal):
 		_ = p.lexer.consumeToken()
-		if p.consumeKeyword(KeywordIn) != nil {
+		if p.expectKeyword(KeywordIn) != nil {
 			return nil, fmt.Errorf("expected IN after GLOBAL, got %s", p.lastTokenKind())
 		}
 		rightExpr, err := p.parseSubExpr(p.Pos(), precedence)
@@ -155,7 +157,7 @@ func (p *Parser) parseInfix(expr Expr, precedence int) (Expr, error) {
 			return nil, err
 		}
 		return &IndexOperation{
-			LeftExpr:  expr,
+			Object:    expr,
 			Operation: TokenKindDot,
 			Index:     rightExpr,
 		}, nil
@@ -195,8 +197,8 @@ func (p *Parser) parseInfix(expr Expr, precedence int) (Expr, error) {
 		return p.parseTernaryExpr(expr)
 	case p.matchKeyword(KeywordIs):
 		_ = p.lexer.consumeToken()
-		isNotNull := p.tryConsumeKeyword(KeywordNot) != nil
-		if err := p.consumeKeyword(KeywordNull); err != nil {
+		isNotNull := p.tryConsumeKeywords(KeywordNot)
+		if err := p.expectKeyword(KeywordNull); err != nil {
 			return nil, err
 		}
 		if isNotNull {
@@ -238,14 +240,14 @@ func (p *Parser) parseSubExpr(pos Pos, precedence int) (Expr, error) {
 }
 
 func (p *Parser) parseTernaryExpr(condition Expr) (*TernaryOperation, error) {
-	if _, err := p.consumeTokenKind(TokenKindQuestionMark); err != nil {
+	if err := p.expectTokenKind(TokenKindQuestionMark); err != nil {
 		return nil, err
 	}
 	trueExpr, err := p.parseExpr(p.Pos())
 	if err != nil {
 		return nil, err
 	}
-	if _, err := p.consumeTokenKind(TokenKindColon); err != nil {
+	if err := p.expectTokenKind(TokenKindColon); err != nil {
 		return nil, err
 	}
 	falseExpr, err := p.parseExpr(p.Pos())
@@ -260,10 +262,10 @@ func (p *Parser) parseTernaryExpr(condition Expr) (*TernaryOperation, error) {
 }
 
 func (p *Parser) parseColumnExtractExpr(pos Pos) (*ExtractExpr, error) {
-	if err := p.consumeKeyword(KeywordExtract); err != nil {
+	if err := p.expectKeyword(KeywordExtract); err != nil {
 		return nil, err
 	}
-	if _, err := p.consumeTokenKind(TokenKindLParen); err != nil {
+	if err := p.expectTokenKind(TokenKindLParen); err != nil {
 		return nil, err
 	}
 
@@ -272,12 +274,12 @@ func (p *Parser) parseColumnExtractExpr(pos Pos) (*ExtractExpr, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !intervalType.Contains(strings.ToUpper(ident.Name)) {
+	if !intervalUnits.Contains(strings.ToUpper(ident.Name)) {
 		return nil, fmt.Errorf("unknown interval type: <%q>", ident.Name)
 	}
 
 	fromPos := p.Pos()
-	if err := p.consumeKeyword(KeywordFrom); err != nil {
+	if err := p.expectKeyword(KeywordFrom); err != nil {
 		return nil, err
 	}
 
@@ -285,7 +287,7 @@ func (p *Parser) parseColumnExtractExpr(pos Pos) (*ExtractExpr, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return &ExtractExpr{
@@ -297,7 +299,7 @@ func (p *Parser) parseColumnExtractExpr(pos Pos) (*ExtractExpr, error) {
 }
 
 func (p *Parser) parseUnaryExpr(pos Pos) (Expr, error) {
-	kind := p.last()
+	op := p.last()
 	switch {
 	case p.matchTokenKind(TokenKindPlus),
 		p.matchTokenKind(TokenKindMinus),
@@ -314,7 +316,7 @@ func (p *Parser) parseUnaryExpr(pos Pos) (Expr, error) {
 
 	return &UnaryExpr{
 		UnaryPos: pos,
-		Kind:     kind.Kind,
+		Kind:     TokenKind(op.ToString()),
 		Expr:     expr,
 	}, nil
 
@@ -331,10 +333,60 @@ func (p *Parser) peekTokenKind(kind TokenKind) bool {
 	return token.Kind == kind
 }
 
+func (p *Parser) peekKeyword(keyword string) bool {
+	if p.lexer.isEOF() {
+		return false
+	}
+	token, err := p.lexer.peekToken()
+	if err != nil || token == nil {
+		return false
+	}
+	return token.Kind == TokenKindKeyword && strings.EqualFold(token.String, keyword)
+}
+
+// isSelectItemTerminatorKeyword checks whether the current token is a keyword
+// that begins a clause following the SELECT item list. When true, we should not
+// treat the keyword itself as a bare alias.
+func (p *Parser) isSelectItemTerminatorKeyword() bool {
+	switch {
+	case p.matchKeyword(KeywordFrom):
+		return true
+	case p.matchKeyword(KeywordWhere):
+		return true
+	case p.matchKeyword(KeywordPrewhere):
+		return true
+	case p.matchKeyword(KeywordGroup):
+		return true
+	case p.matchKeyword(KeywordHaving):
+		return true
+	case p.matchKeyword(KeywordWindow):
+		return true
+	case p.matchKeyword(KeywordOrder):
+		return true
+	case p.matchKeyword(KeywordLimit):
+		return true
+	case p.matchKeyword(KeywordSettings):
+		return true
+	case p.matchKeyword(KeywordFormat):
+		return true
+	case p.matchKeyword(KeywordUnion):
+		return true
+	case p.matchKeyword(KeywordExcept):
+		return true
+	default:
+		return false
+	}
+}
+
 func (p *Parser) parseColumnExpr(pos Pos) (Expr, error) { //nolint:funlen
+	// Should parse the keyword as an identifier if the keyword is followed by one of comma, `AS`.
+	// For example: `SELECT 1 as interval GROUP BY interval` is a valid syntax in ClickHouse.
+	if p.matchTokenKind(TokenKindKeyword) && (p.peekTokenKind(TokenKindComma) || p.peekKeyword(KeywordAs)) {
+		return p.parseIdent()
+	}
 	switch {
 	case p.matchKeyword(KeywordInterval):
-		return p.parseColumnExprInterval(pos)
+		return p.parseInterval(true)
 	case p.matchKeyword(KeywordDate), p.matchKeyword(KeywordTimestamp):
 		nextToken, err := p.lexer.peekToken()
 		if err != nil {
@@ -348,6 +400,8 @@ func (p *Parser) parseColumnExpr(pos Pos) (Expr, error) { //nolint:funlen
 		return p.parseColumnCastExpr(pos)
 	case p.matchKeyword(KeywordCase):
 		return p.parseColumnCaseExpr(pos)
+	case p.matchKeyword(KeywordSelect):
+		return p.parseSelectQuery(pos)
 	case p.matchKeyword(KeywordExtract):
 		return p.parseColumnExtractExpr(pos)
 	case p.matchTokenKind(TokenKindIdent):
@@ -371,7 +425,9 @@ func (p *Parser) parseColumnExpr(pos Pos) (Expr, error) { //nolint:funlen
 	case p.matchTokenKind(TokenKindLBrace):
 		// The map literal string also starts with '{', so we need to check the next token
 		// to determine if it is a map literal or a query param.
-		if p.peekTokenKind(TokenKindIdent) {
+		// Treat both identifiers and keywords as identifier-like for placeholders.
+		// parseIdent accepts keywords-as-ident, so this is safe.
+		if p.peekTokenKind(TokenKindIdent) || p.peekTokenKind(TokenKindKeyword) {
 			return p.parseQueryParam(p.Pos())
 		}
 		return p.parseMapLiteral(p.Pos())
@@ -391,11 +447,11 @@ func (p *Parser) parseColumnExpr(pos Pos) (Expr, error) { //nolint:funlen
 }
 
 func (p *Parser) parseColumnCastExpr(pos Pos) (Expr, error) {
-	if err := p.consumeKeyword(KeywordCast); err != nil {
+	if err := p.expectKeyword(KeywordCast); err != nil {
 		return nil, err
 	}
 
-	if _, err := p.consumeTokenKind(TokenKindLParen); err != nil {
+	if err := p.expectTokenKind(TokenKindLParen); err != nil {
 		return nil, err
 	}
 
@@ -426,7 +482,7 @@ func (p *Parser) parseColumnCastExpr(pos Pos) (Expr, error) {
 		return nil, err
 	}
 
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 
@@ -456,7 +512,7 @@ func (p *Parser) parseColumnExprListWithTerm(term TokenKind, pos Pos) (*ColumnEx
 		ListPos: pos,
 		ListEnd: pos,
 	}
-	columnExprList.HasDistinct = p.tryConsumeKeyword(KeywordDistinct) != nil
+	columnExprList.HasDistinct = p.tryConsumeKeywords(KeywordDistinct)
 	columnList := make([]Expr, 0)
 	for !p.lexer.isEOF() || p.last() != nil {
 		if term != "" && p.matchTokenKind(term) {
@@ -499,30 +555,30 @@ func (p *Parser) parseSelectItems() ([]*SelectItem, error) {
 	return selectItems, nil
 }
 
-// Syntax: INTERVAL expr interval
-func (p *Parser) parseColumnExprInterval(pos Pos) (Expr, error) {
-	if err := p.consumeKeyword(KeywordInterval); err != nil {
-		return nil, err
+func (p *Parser) parseInterval(requireKeyword bool) (*IntervalExpr, error) {
+	var intervalPos Pos
+	if requireKeyword {
+		intervalPos = p.Pos()
+		if err := p.expectKeyword(KeywordInterval); err != nil {
+			return nil, err
+		}
 	}
-
-	// store the column expr if it needs
-	columnExpr, err := p.parseExpr(p.Pos())
+	expr, err := p.parseExpr(p.Pos())
 	if err != nil {
 		return nil, err
 	}
 
-	// parse interval
-	ident, err := p.parseIdent()
+	unit, err := p.parseIdent()
 	if err != nil {
 		return nil, err
 	}
-	if !intervalType.Contains(strings.ToUpper(ident.Name)) {
-		return nil, fmt.Errorf("unknown interval type: <%q>", ident.Name)
+	if !intervalUnits.Contains(strings.ToUpper(unit.Name)) {
+		return nil, fmt.Errorf("unknown interval type: <%q>", unit.Name)
 	}
 	return &IntervalExpr{
-		IntervalPos: pos,
-		Expr:        columnExpr,
-		Unit:        ident,
+		IntervalPos: intervalPos,
+		Expr:        expr,
+		Unit:        unit,
 	}, nil
 }
 
@@ -544,13 +600,11 @@ func (p *Parser) parseFunctionExpr(_ Pos) (*FunctionExpr, error) {
 }
 
 func (p *Parser) parseColumnArgList(pos Pos) (*ColumnArgList, error) {
-	if _, err := p.consumeTokenKind(TokenKindLParen); err != nil {
+	if err := p.expectTokenKind(TokenKindLParen); err != nil {
 		return nil, err
 	}
-	distinct := false
-	if p.tryConsumeKeyword(KeywordDistinct) != nil {
-		distinct = true
-	}
+	distinct := p.tryConsumeKeywords(KeywordDistinct)
+
 	var items []Expr
 	for !p.lexer.isEOF() && !p.matchTokenKind(TokenKindRParen) {
 		item, err := p.parseExpr(p.Pos())
@@ -563,7 +617,7 @@ func (p *Parser) parseColumnArgList(pos Pos) (*ColumnArgList, error) {
 		}
 	}
 	rightParenPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return &ColumnArgList{
@@ -575,7 +629,7 @@ func (p *Parser) parseColumnArgList(pos Pos) (*ColumnArgList, error) {
 }
 
 func (p *Parser) parseFunctionParams(pos Pos) (*ParamExprList, error) {
-	if _, err := p.consumeTokenKind(TokenKindLParen); err != nil {
+	if err := p.expectTokenKind(TokenKindLParen); err != nil {
 		return nil, err
 	}
 	params, err := p.parseColumnExprListWithLParen(p.Pos())
@@ -583,7 +637,7 @@ func (p *Parser) parseFunctionParams(pos Pos) (*ParamExprList, error) {
 		return nil, err
 	}
 	rightParenPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	paramExprList := &ParamExprList{
@@ -606,7 +660,7 @@ func (p *Parser) parseFunctionParams(pos Pos) (*ParamExprList, error) {
 }
 
 func (p *Parser) parseMapLiteral(pos Pos) (*MapLiteral, error) {
-	if _, err := p.consumeTokenKind(TokenKindLBrace); err != nil {
+	if err := p.expectTokenKind(TokenKindLBrace); err != nil {
 		return nil, err
 	}
 
@@ -616,7 +670,7 @@ func (p *Parser) parseMapLiteral(pos Pos) (*MapLiteral, error) {
 		if err != nil {
 			return nil, err
 		}
-		if _, err := p.consumeTokenKind(TokenKindColon); err != nil {
+		if err := p.expectTokenKind(TokenKindColon); err != nil {
 			return nil, err
 		}
 		value, err := p.parseExpr(p.Pos())
@@ -632,7 +686,7 @@ func (p *Parser) parseMapLiteral(pos Pos) (*MapLiteral, error) {
 		}
 	}
 	rightBracePos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRBrace); err != nil {
+	if err := p.expectTokenKind(TokenKindRBrace); err != nil {
 		return nil, err
 	}
 	return &MapLiteral{
@@ -643,7 +697,7 @@ func (p *Parser) parseMapLiteral(pos Pos) (*MapLiteral, error) {
 }
 
 func (p *Parser) parseQueryParam(pos Pos) (*QueryParam, error) {
-	if _, err := p.consumeTokenKind(TokenKindLBrace); err != nil {
+	if err := p.expectTokenKind(TokenKindLBrace); err != nil {
 		return nil, err
 	}
 
@@ -651,7 +705,7 @@ func (p *Parser) parseQueryParam(pos Pos) (*QueryParam, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := p.consumeTokenKind(TokenKindColon); err != nil {
+	if err := p.expectTokenKind(TokenKindColon); err != nil {
 		return nil, err
 	}
 	columnType, err := p.parseColumnType(p.Pos())
@@ -659,7 +713,7 @@ func (p *Parser) parseQueryParam(pos Pos) (*QueryParam, error) {
 		return nil, err
 	}
 	rightBracePos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRBrace); err != nil {
+	if err := p.expectTokenKind(TokenKindRBrace); err != nil {
 		return nil, err
 	}
 	return &QueryParam{
@@ -671,7 +725,7 @@ func (p *Parser) parseQueryParam(pos Pos) (*QueryParam, error) {
 }
 
 func (p *Parser) parseArrayParams(pos Pos) (*ArrayParamList, error) {
-	if _, err := p.consumeTokenKind(TokenKindLBracket); err != nil {
+	if err := p.expectTokenKind(TokenKindLBracket); err != nil {
 		return nil, err
 	}
 	params, err := p.parseColumnExprListWithSquareBracket(p.Pos())
@@ -679,7 +733,7 @@ func (p *Parser) parseArrayParams(pos Pos) (*ArrayParamList, error) {
 		return nil, err
 	}
 	rightBracketPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRBracket); err != nil {
+	if err := p.expectTokenKind(TokenKindRBracket); err != nil {
 		return nil, err
 	}
 	return &ArrayParamList{
@@ -696,7 +750,7 @@ func (p *Parser) parseColumnsExpr(pos Pos) (*ColumnExpr, error) {
 	}
 
 	var alias *Ident
-	if p.tryConsumeKeyword(KeywordAs) != nil {
+	if p.tryConsumeKeywords(KeywordAs) {
 		alias, err = p.parseIdent()
 		if err != nil {
 			return nil, err
@@ -728,12 +782,21 @@ func (p *Parser) parseSelectItem() (*SelectItem, error) {
 	}
 
 	var alias *Ident
-	if p.tryConsumeKeyword(KeywordAs) != nil {
+	switch {
+	case p.tryConsumeKeywords(KeywordAs):
 		alias, err = p.parseIdent()
 		if err != nil {
 			return nil, err
 		}
+	case p.lastTokenKind() == TokenKindKeyword && !p.isSelectItemTerminatorKeyword():
+		alias, err = p.parseIdent()
+		if err != nil {
+			return nil, err
+		}
+	default:
+		alias = p.tryParseIdent()
 	}
+
 	return &SelectItem{
 		Expr:      expr,
 		Modifiers: modifiers,
@@ -744,7 +807,7 @@ func (p *Parser) parseSelectItem() (*SelectItem, error) {
 func (p *Parser) parseColumnCaseExpr(pos Pos) (*CaseExpr, error) {
 	// CASE expr
 	caseExpr := &CaseExpr{CasePos: pos}
-	if err := p.consumeKeyword(KeywordCase); err != nil {
+	if err := p.expectKeyword(KeywordCase); err != nil {
 		return nil, err
 	}
 
@@ -768,7 +831,7 @@ func (p *Parser) parseColumnCaseExpr(pos Pos) (*CaseExpr, error) {
 		}
 
 		thenPos := p.Pos()
-		if err := p.consumeKeyword(KeywordThen); err != nil {
+		if err := p.expectKeyword(KeywordThen); err != nil {
 			return nil, err
 		}
 		thenCondition, err := p.parseExpr(p.Pos())
@@ -786,16 +849,17 @@ func (p *Parser) parseColumnCaseExpr(pos Pos) (*CaseExpr, error) {
 	caseExpr.Whens = whenClauses
 
 	// ELSE expr
-	if elseToken := p.tryConsumeKeyword(KeywordElse); elseToken != nil {
+	elsePos := p.Pos()
+	if p.tryConsumeKeywords(KeywordElse) {
 		elseExpr, err := p.parseExpr(p.Pos())
 		if err != nil {
 			return nil, err
 		}
-		caseExpr.ElsePos = elseToken.Pos
+		caseExpr.ElsePos = elsePos
 		caseExpr.Else = elseExpr
 	}
 
-	if err := p.consumeKeyword(KeywordEnd); err != nil {
+	if err := p.expectKeyword(KeywordEnd); err != nil {
 		return nil, err
 	}
 
@@ -810,11 +874,13 @@ func (p *Parser) parseColumnType(_ Pos) (ColumnType, error) { // nolint:funlen
 	if p.tryConsumeTokenKind(TokenKindLParen) != nil {
 		switch {
 		case p.matchTokenKind(TokenKindIdent):
-			switch ident.Name {
-			case "Nested":
+			switch {
+			case strings.EqualFold(ident.Name, "Nested"):
 				return p.parseNestedType(ident, p.Pos())
-			case "JSON":
+			case strings.EqualFold(ident.Name, "JSON"):
 				return p.parseJSONType(ident, p.Pos())
+			case strings.EqualFold(ident.Name, "QBit"):
+				return p.parseColumnTypeWithParams(ident, p.Pos())
 			default:
 				return p.parseComplexType(ident, p.Pos())
 			}
@@ -858,7 +924,7 @@ func (p *Parser) parseComplexType(name *Ident, pos Pos) (*ComplexType, error) {
 		}
 	}
 	rightParenPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return &ComplexType{
@@ -891,7 +957,7 @@ func (p *Parser) parseEnumType(name *Ident, pos Pos) (*EnumType, error) {
 	if len(enumType.Values) > 0 {
 		enumType.ListEnd = enumType.Values[len(enumType.Values)-1].Value.NumEnd
 	}
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return enumType, nil
@@ -913,7 +979,7 @@ func (p *Parser) parseColumnTypeWithParams(name *Ident, pos Pos) (*TypeWithParam
 	}
 
 	rightParenPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return &TypeWithParams{
@@ -944,10 +1010,38 @@ func (p *Parser) parseJSONPath() (*JSONPath, error) {
 	}, nil
 }
 
+func (p *Parser) parseJSONMaxDynamicOptions(pos Pos) (*JSONOption, error) {
+	ident, err := p.parseIdent()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.expectTokenKind(TokenKindSingleEQ); err != nil {
+		return nil, err
+	}
+
+	switch ident.Name {
+	case "max_dynamic_types":
+		number, err := p.parseNumber(pos)
+		if err != nil {
+			return nil, err
+		}
+		return &JSONOption{MaxDynamicTypes: number}, nil
+	case "max_dynamic_paths":
+		number, err := p.parseNumber(pos)
+		if err != nil {
+			return nil, err
+		}
+		return &JSONOption{MaxDynamicPaths: number}, nil
+	default:
+		return nil, fmt.Errorf("unexpected token kind: %s", p.lastTokenKind())
+	}
+}
+
 func (p *Parser) parseJSONOption() (*JSONOption, error) {
 	switch {
-	case p.tryConsumeKeyword(KeywordSkip) != nil:
-		if p.tryConsumeKeyword(KeywordRegexp) != nil {
+	case p.tryConsumeKeywords(KeywordSkip):
+		if p.tryConsumeKeywords(KeywordRegexp) {
 			regex, err := p.parseString(p.Pos())
 			if err != nil {
 				return nil, err
@@ -963,6 +1057,52 @@ func (p *Parser) parseJSONOption() (*JSONOption, error) {
 		return &JSONOption{
 			SkipPath: jsonPath,
 		}, nil
+	case p.matchTokenKind(TokenKindIdent):
+		// Could be max_dynamic_* option OR a type hint like: a.b String
+		// Lookahead to see if there's an '=' following the identifier path (max_dynamic_*)
+		// or if it's a path followed by a ColumnType.
+		// We'll parse a JSONPath first, then decide.
+		// Save lexer state by consuming as path greedily using existing helpers.
+		// Try: if single ident and next is '=' -> max_dynamic_*; else treat as path + type
+
+		// Peek next token after current ident without consuming type; we need to
+		// attempt to parse as max_dynamic_* first as it's existing behavior for a single ident.
+		// To support dotted paths, we need to capture path, then if '=' exists, it's option; otherwise parse type.
+		path, err := p.parseJSONPath()
+		if err != nil {
+			return nil, err
+		}
+		if p.tryConsumeTokenKind(TokenKindSingleEQ) != nil {
+			// This is a max_dynamic_* option; only valid when path is a single ident of that name
+			// Reconstruct handling similar to parseJSONMaxDynamicOptions but we already consumed ident and '='
+			// Determine which option based on the first ident name
+			if len(path.Idents) != 1 {
+				return nil, fmt.Errorf("unexpected token kind: %s", p.lastTokenKind())
+			}
+			name := path.Idents[0].Name
+			switch name {
+			case "max_dynamic_types":
+				number, err := p.parseNumber(p.Pos())
+				if err != nil {
+					return nil, err
+				}
+				return &JSONOption{MaxDynamicTypes: number}, nil
+			case "max_dynamic_paths":
+				number, err := p.parseNumber(p.Pos())
+				if err != nil {
+					return nil, err
+				}
+				return &JSONOption{MaxDynamicPaths: number}, nil
+			default:
+				return nil, fmt.Errorf("unexpected token kind: %s", p.lastTokenKind())
+			}
+		}
+		// Otherwise, expect a ColumnType as a type hint for the JSON subpath
+		colType, err := p.parseColumnType(p.Pos())
+		if err != nil {
+			return nil, err
+		}
+		return &JSONOption{Column: &JSONTypeHint{Path: path, Type: colType}}, nil
 	default:
 		return nil, fmt.Errorf("unexpected token kind: %s", p.lastTokenKind())
 	}
@@ -985,15 +1125,15 @@ func (p *Parser) parseJSONType(name *Ident, pos Pos) (*JSONType, error) {
 		}
 	}
 
-	rparenPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	rightParenPos := p.Pos()
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return &JSONType{
 		Name: name,
 		Options: &JSONOptions{
 			LParen: pos,
-			RParen: rparenPos,
+			RParen: rightParenPos,
 			Items:  options,
 		},
 	}, nil
@@ -1005,7 +1145,7 @@ func (p *Parser) parseNestedType(name *Ident, pos Pos) (*NestedType, error) {
 		return nil, err
 	}
 	rightParenPos := p.Pos()
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return &NestedType{
@@ -1017,11 +1157,11 @@ func (p *Parser) parseNestedType(name *Ident, pos Pos) (*NestedType, error) {
 }
 
 func (p *Parser) tryParseCompressionCodecs(pos Pos) (*CompressionCodec, error) {
-	if p.tryConsumeKeyword(KeywordCodec) == nil {
+	if !p.tryConsumeKeywords(KeywordCodec) {
 		return nil, nil // nolint
 	}
 
-	if _, err := p.consumeTokenKind(TokenKindLParen); err != nil {
+	if err := p.expectTokenKind(TokenKindLParen); err != nil {
 		return nil, err
 	}
 
@@ -1043,7 +1183,7 @@ func (p *Parser) tryParseCompressionCodecs(pos Pos) (*CompressionCodec, error) {
 			return nil, err
 		}
 		// consume comma
-		if _, err := p.consumeTokenKind(TokenKindComma); err != nil {
+		if err := p.expectTokenKind(TokenKindComma); err != nil {
 			return nil, err
 		}
 		name, err = p.parseIdent()
@@ -1062,8 +1202,8 @@ func (p *Parser) tryParseCompressionCodecs(pos Pos) (*CompressionCodec, error) {
 		}
 	}
 
-	rightParenPos := p.last().End
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	rightParenPos := p.End()
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 
@@ -1083,7 +1223,7 @@ func (p *Parser) parseEnumValueExpr(pos Pos) (*EnumValue, error) {
 		return nil, err
 	}
 
-	if _, err := p.consumeTokenKind(TokenKindSingleEQ); err != nil {
+	if err := p.expectTokenKind(TokenKindSingleEQ); err != nil {
 		return nil, err
 	}
 
@@ -1098,7 +1238,7 @@ func (p *Parser) parseEnumValueExpr(pos Pos) (*EnumValue, error) {
 }
 
 func (p *Parser) parseColumnStar(pos Pos) (*Ident, error) {
-	if _, err := p.consumeTokenKind("*"); err != nil {
+	if err := p.expectTokenKind("*"); err != nil {
 		return nil, err
 	}
 	return &Ident{
@@ -1118,7 +1258,7 @@ func (p *Parser) tryParseCompressionLevel(pos Pos) (*NumberLiteral, error) {
 		return nil, err
 	}
 
-	if _, err := p.consumeTokenKind(TokenKindRParen); err != nil {
+	if err := p.expectTokenKind(TokenKindRParen); err != nil {
 		return nil, err
 	}
 	return num, nil

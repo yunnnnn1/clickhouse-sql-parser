@@ -50,6 +50,7 @@ const (
 	Unquoted = iota + 1
 	DoubleQuote
 	BackTicks
+	SingleQuote
 )
 
 type Pos int
@@ -72,14 +73,27 @@ func (t *Token) ToString() string {
 	return t.String
 }
 
-type Lexer struct {
-	input     string
+type lexerState struct {
 	current   int
 	lastToken *Token
 }
 
+type Lexer struct {
+	lexerState
+
+	input string
+}
+
 func NewLexer(buf string) *Lexer {
 	return &Lexer{input: buf}
+}
+
+func (l *Lexer) saveState() lexerState {
+	return l.lexerState
+}
+
+func (l *Lexer) restoreState(state lexerState) {
+	l.lexerState = state
 }
 
 func (l *Lexer) skipN(n int) {
@@ -175,7 +189,7 @@ func (l *Lexer) consumeIdent(_ Pos) error {
 
 	i := 0
 	if quoteType == Unquoted {
-		if l.peekN(i) == '$' {
+		if l.peekOk(i) && l.peekN(i) == '$' {
 			i++
 		}
 		for l.peekOk(i) && IsIdentPart(l.peekN(i)) {
@@ -235,10 +249,28 @@ func (l *Lexer) consumeMultiLineComment() {
 func (l *Lexer) consumeString() error {
 	i := 1
 	endChar := byte('\'')
-	for l.peekOk(i) && l.peekN(i) != endChar {
+	for l.peekOk(i) {
+		c := l.peekN(i)
+		// backslash escape
+		if c == '\\' {
+			i++
+			if l.peekOk(i) {
+				i++
+			}
+			continue
+		}
+		// single quote
+		if c == endChar {
+			// double single quote ''
+			if l.peekOk(i+1) && l.peekN(i+1) == endChar {
+				i += 2
+				continue
+			}
+			break
+		}
 		i++
 	}
-	if !l.peekOk(i) {
+	if !l.peekOk(i) || l.peekN(i) != endChar {
 		return errors.New("invalid string")
 	}
 	l.lastToken = &Token{
@@ -280,15 +312,13 @@ func (l *Lexer) skipComments() {
 }
 
 func (l *Lexer) peekToken() (*Token, error) {
-	saveToken := l.lastToken
-	saveCurrent := l.current
+	savedState := l.saveState()
 	if err := l.consumeToken(); err != nil {
 		return nil, err
 	}
 	token := l.lastToken
 
-	l.lastToken = saveToken
-	l.current = saveCurrent
+	l.restoreState(savedState)
 	return token, nil
 }
 

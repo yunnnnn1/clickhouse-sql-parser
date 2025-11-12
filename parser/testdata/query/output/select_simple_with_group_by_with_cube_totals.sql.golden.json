@@ -4,6 +4,8 @@
     "StatementEnd": 86,
     "With": null,
     "Top": null,
+    "HasDistinct": false,
+    "DistinctOn": null,
     "SelectItems": [
       {
         "Expr": {
@@ -78,6 +80,7 @@
     "Where": null,
     "GroupBy": {
       "GroupByPos": 37,
+      "GroupByEnd": 76,
       "AggregateType": "CUBE",
       "Expr": {
         "LeftParenPos": 50,
@@ -119,9 +122,11 @@
             "NameEnd": 86
           },
           "Alias": null,
-          "Direction": "None"
+          "Direction": "",
+          "Fill": null
         }
-      ]
+      ],
+      "Interpolate": null
     },
     "LimitBy": null,
     "Limit": null,

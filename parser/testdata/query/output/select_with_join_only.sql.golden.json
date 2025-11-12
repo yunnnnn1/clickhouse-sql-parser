@@ -4,6 +4,8 @@
     "StatementEnd": 17,
     "With": null,
     "Top": null,
+    "HasDistinct": false,
+    "DistinctOn": null,
     "SelectItems": [
       {
         "Expr": {

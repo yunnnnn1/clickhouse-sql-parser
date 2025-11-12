@@ -27,8 +27,14 @@ type ASTVisitor interface {
 	VisitAlterTableMaterializeProjection(expr *AlterTableMaterializeProjection) error
 	VisitAlterTableRenameColumn(expr *AlterTableRenameColumn) error
 	VisitAlterTableModifyTTL(expr *AlterTableModifyTTL) error
+	VisitAlterTableModifyQuery(expr *AlterTableModifyQuery) error
 	VisitAlterTableModifyColumn(expr *AlterTableModifyColumn) error
+	VisitAlterTableModifySetting(expr *AlterTableModifySetting) error
+	VisitAlterTableResetSetting(expr *AlterTableResetSetting) error
 	VisitAlterTableReplacePartition(expr *AlterTableReplacePartition) error
+	VisitAlterTableDelete(expr *AlterTableDelete) error
+	VisitAlterTableUpdate(expr *AlterTableUpdate) error
+	VisitUpdateAssignment(expr *UpdateAssignment) error
 	VisitRemovePropertyType(expr *RemovePropertyType) error
 	VisitTableIndex(expr *TableIndex) error
 	VisitIdent(expr *Ident) error
@@ -42,14 +48,19 @@ type ASTVisitor interface {
 	VisitSettingPair(expr *SettingPair) error
 	VisitRoleSetting(expr *RoleSetting) error
 	VisitCreateRole(expr *CreateRole) error
+	VisitCreateUser(expr *CreateUser) error
+	VisitAuthenticationClause(expr *AuthenticationClause) error
+	VisitHostClause(expr *HostClause) error
+	VisitDefaultRoleClause(expr *DefaultRoleClause) error
+	VisitGranteesClause(expr *GranteesClause) error
 	VisitAlterRole(expr *AlterRole) error
 	VisitRoleRenamePair(expr *RoleRenamePair) error
 	VisitDestinationExpr(expr *DestinationClause) error
 	VisitConstraintExpr(expr *ConstraintClause) error
 	VisitNullLiteral(expr *NullLiteral) error
 	VisitNotNullLiteral(expr *NotNullLiteral) error
+	VisitPath(expr *Path) error
 	VisitNestedIdentifier(expr *NestedIdentifier) error
-	VisitColumnIdentifier(expr *ColumnIdentifier) error
 	VisitTableIdentifier(expr *TableIdentifier) error
 	VisitTableSchemaExpr(expr *TableSchemaClause) error
 	VisitTableArgListExpr(expr *TableArgListExpr) error
@@ -61,9 +72,16 @@ type ASTVisitor interface {
 	VisitSampleByExpr(expr *SampleByClause) error
 	VisitTTLExpr(expr *TTLExpr) error
 	VisitTTLExprList(expr *TTLClause) error
+	VisitTTLPolicy(expr *TTLPolicy) error
+	VisitTTLPolicyRule(expr *TTLPolicyRule) error
+	VisitTTLPolicyItemAction(expr *TTLPolicyRuleAction) error
+	VisitRefreshExpr(expr *RefreshExpr) error
 	VisitOrderByExpr(expr *OrderExpr) error
 	VisitOrderByListExpr(expr *OrderByClause) error
-	VisitSettingsExpr(expr *SettingExprList) error
+	VisitFill(expr *Fill) error
+	VisitInterpolateItem(expr *InterpolateItem) error
+	VisitInterpolateClause(expr *InterpolateClause) error
+	VisitSettingsExpr(expr *SettingExpr) error
 	VisitSettingsExprList(expr *SettingsClause) error
 	VisitParamExprList(expr *ParamExprList) error
 	VisitMapLiteral(expr *MapLiteral) error
@@ -74,6 +92,7 @@ type ASTVisitor interface {
 	VisitWindowFunctionExpr(expr *WindowFunctionExpr) error
 	VisitColumnDef(expr *ColumnDef) error
 	VisitColumnExpr(expr *ColumnExpr) error
+	VisitTypedPlaceholder(expr *TypedPlaceholder) error
 	VisitScalarType(expr *ScalarType) error
 	VisitJSONType(expr *JSONType) error
 	VisitPropertyType(expr *PropertyType) error
@@ -97,6 +116,16 @@ type ASTVisitor interface {
 	VisitWithExpr(expr *WithClause) error
 	VisitTopExpr(expr *TopClause) error
 	VisitCreateLiveView(expr *CreateLiveView) error
+	VisitCreateDictionary(expr *CreateDictionary) error
+	VisitDictionarySchemaClause(expr *DictionarySchemaClause) error
+	VisitDictionaryAttribute(expr *DictionaryAttribute) error
+	VisitDictionaryEngineClause(expr *DictionaryEngineClause) error
+	VisitDictionaryPrimaryKeyClause(expr *DictionaryPrimaryKeyClause) error
+	VisitDictionarySourceClause(expr *DictionarySourceClause) error
+	VisitDictionaryArgExpr(expr *DictionaryArgExpr) error
+	VisitDictionaryLifetimeClause(expr *DictionaryLifetimeClause) error
+	VisitDictionaryLayoutClause(expr *DictionaryLayoutClause) error
+	VisitDictionaryRangeClause(expr *DictionaryRangeClause) error
 	VisitWithTimeoutExpr(expr *WithTimeoutClause) error
 	VisitTableExpr(expr *TableExpr) error
 	VisitOnExpr(expr *OnClause) error
@@ -122,6 +151,7 @@ type ASTVisitor interface {
 	VisitWindowFrameCurrentRow(expr *WindowFrameCurrentRow) error
 	VisitWindowFrameUnbounded(expr *WindowFrameUnbounded) error
 	VisitWindowFrameNumber(expr *WindowFrameNumber) error
+	VisitWindowFrameParam(expr *WindowFrameParam) error
 	VisitArrayJoinExpr(expr *ArrayJoinClause) error
 	VisitSelectQuery(expr *SelectQuery) error
 	VisitSubQueryExpr(expr *SubQuery) error
@@ -157,10 +187,14 @@ type ASTVisitor interface {
 	VisitExplainExpr(expr *ExplainStmt) error
 	VisitPrivilegeExpr(expr *PrivilegeClause) error
 	VisitGrantPrivilegeExpr(expr *GrantPrivilegeStmt) error
+	VisitShowExpr(expr *ShowStmt) error
+	VisitDescribeExpr(expr *DescribeStmt) error
 	VisitSelectItem(expr *SelectItem) error
+	VisitTargetPairExpr(expr *TargetPair) error
+	VisitDistinctOn(expr *DistinctOn) error
 
-	enter(expr Expr)
-	leave(expr Expr)
+	Enter(expr Expr)
+	Leave(expr Expr)
 }
 
 type VisitFunc func(expr Expr) error
@@ -351,6 +385,13 @@ func (v *DefaultASTVisitor) VisitAlterTableRenameColumn(expr *AlterTableRenameCo
 	return nil
 }
 
+func (v *DefaultASTVisitor) VisitAlterTableModifyQuery(expr *AlterTableModifyQuery) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
 func (v *DefaultASTVisitor) VisitAlterTableModifyTTL(expr *AlterTableModifyTTL) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
@@ -365,7 +406,42 @@ func (v *DefaultASTVisitor) VisitAlterTableModifyColumn(expr *AlterTableModifyCo
 	return nil
 }
 
+func (v *DefaultASTVisitor) VisitAlterTableModifySetting(expr *AlterTableModifySetting) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitAlterTableResetSetting(expr *AlterTableResetSetting) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
 func (v *DefaultASTVisitor) VisitAlterTableReplacePartition(expr *AlterTableReplacePartition) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitAlterTableDelete(expr *AlterTableDelete) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitAlterTableUpdate(expr *AlterTableUpdate) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitUpdateAssignment(expr *UpdateAssignment) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
 	}
@@ -463,6 +539,41 @@ func (v *DefaultASTVisitor) VisitCreateRole(expr *CreateRole) error {
 	return nil
 }
 
+func (v *DefaultASTVisitor) VisitCreateUser(expr *CreateUser) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitAuthenticationClause(expr *AuthenticationClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitHostClause(expr *HostClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDefaultRoleClause(expr *DefaultRoleClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitGranteesClause(expr *GranteesClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
 func (v *DefaultASTVisitor) VisitAlterRole(expr *AlterRole) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
@@ -512,7 +623,7 @@ func (v *DefaultASTVisitor) VisitNestedIdentifier(expr *NestedIdentifier) error 
 	return nil
 }
 
-func (v *DefaultASTVisitor) VisitColumnIdentifier(expr *ColumnIdentifier) error {
+func (v *DefaultASTVisitor) VisitPath(expr *Path) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
 	}
@@ -596,6 +707,34 @@ func (v *DefaultASTVisitor) VisitTTLExprList(expr *TTLClause) error {
 	return nil
 }
 
+func (v *DefaultASTVisitor) VisitTTLPolicy(expr *TTLPolicy) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitTTLPolicyRule(expr *TTLPolicyRule) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitTTLPolicyItemAction(expr *TTLPolicyRuleAction) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitRefreshExpr(expr *RefreshExpr) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
 func (v *DefaultASTVisitor) VisitOrderByExpr(expr *OrderExpr) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
@@ -610,7 +749,28 @@ func (v *DefaultASTVisitor) VisitOrderByListExpr(expr *OrderByClause) error {
 	return nil
 }
 
-func (v *DefaultASTVisitor) VisitSettingsExpr(expr *SettingExprList) error {
+func (v *DefaultASTVisitor) VisitFill(expr *Fill) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitInterpolateItem(expr *InterpolateItem) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitInterpolateClause(expr *InterpolateClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitSettingsExpr(expr *SettingExpr) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
 	}
@@ -681,6 +841,13 @@ func (v *DefaultASTVisitor) VisitColumnDef(expr *ColumnDef) error {
 }
 
 func (v *DefaultASTVisitor) VisitColumnExpr(expr *ColumnExpr) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitTypedPlaceholder(expr *TypedPlaceholder) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
 	}
@@ -842,6 +1009,76 @@ func (v *DefaultASTVisitor) VisitTopExpr(expr *TopClause) error {
 }
 
 func (v *DefaultASTVisitor) VisitCreateLiveView(expr *CreateLiveView) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitCreateDictionary(expr *CreateDictionary) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionarySchemaClause(expr *DictionarySchemaClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryAttribute(expr *DictionaryAttribute) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryEngineClause(expr *DictionaryEngineClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryPrimaryKeyClause(expr *DictionaryPrimaryKeyClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionarySourceClause(expr *DictionarySourceClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryArgExpr(expr *DictionaryArgExpr) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryLifetimeClause(expr *DictionaryLifetimeClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryLayoutClause(expr *DictionaryLayoutClause) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDictionaryRangeClause(expr *DictionaryRangeClause) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
 	}
@@ -1010,6 +1247,13 @@ func (v *DefaultASTVisitor) VisitWindowFrameUnbounded(expr *WindowFrameUnbounded
 }
 
 func (v *DefaultASTVisitor) VisitWindowFrameNumber(expr *WindowFrameNumber) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitWindowFrameParam(expr *WindowFrameParam) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
 	}
@@ -1261,6 +1505,20 @@ func (v *DefaultASTVisitor) VisitGrantPrivilegeExpr(expr *GrantPrivilegeStmt) er
 	return nil
 }
 
+func (v *DefaultASTVisitor) VisitShowExpr(expr *ShowStmt) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) VisitDescribeExpr(expr *DescribeStmt) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
 func (v *DefaultASTVisitor) VisitSelectItem(expr *SelectItem) error {
 	if v.Visit != nil {
 		return v.Visit(expr)
@@ -1268,6 +1526,20 @@ func (v *DefaultASTVisitor) VisitSelectItem(expr *SelectItem) error {
 	return nil
 }
 
-func (v *DefaultASTVisitor) enter(expr Expr) {}
+func (v *DefaultASTVisitor) VisitTargetPairExpr(expr *TargetPair) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
 
-func (v *DefaultASTVisitor) leave(expr Expr) {}
+func (v *DefaultASTVisitor) VisitDistinctOn(expr *DistinctOn) error {
+	if v.Visit != nil {
+		return v.Visit(expr)
+	}
+	return nil
+}
+
+func (v *DefaultASTVisitor) Enter(expr Expr) {}
+
+func (v *DefaultASTVisitor) Leave(expr Expr) {}

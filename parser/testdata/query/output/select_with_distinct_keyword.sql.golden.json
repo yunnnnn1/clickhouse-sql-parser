@@ -1,40 +1,42 @@
 [
   {
     "SelectPos": 0,
-    "StatementEnd": 28,
+    "StatementEnd": 38,
     "With": null,
     "Top": null,
+    "HasDistinct": true,
+    "DistinctOn": null,
     "SelectItems": [
       {
         "Expr": {
-          "Name": "*",
-          "QuoteType": 0,
-          "NamePos": 7,
-          "NameEnd": 7
+          "Name": "record_id",
+          "QuoteType": 1,
+          "NamePos": 16,
+          "NameEnd": 25
         },
         "Modifiers": [],
         "Alias": null
       }
     ],
     "From": {
-      "FromPos": 9,
+      "FromPos": 26,
       "Expr": {
         "Table": {
-          "TablePos": 14,
-          "TableEnd": 16,
+          "TablePos": 31,
+          "TableEnd": 38,
           "Alias": null,
           "Expr": {
             "Database": null,
             "Table": {
-              "Name": "t0",
+              "Name": "records",
               "QuoteType": 1,
-              "NamePos": 14,
-              "NameEnd": 16
+              "NamePos": 31,
+              "NameEnd": 38
             }
           },
           "HasFinal": false
         },
-        "StatementEnd": 16,
+        "StatementEnd": 38,
         "SampleRatio": null,
         "HasFinal": false
       }
@@ -42,25 +44,7 @@
     "ArrayJoin": null,
     "Window": null,
     "Prewhere": null,
-    "Where": {
-      "WherePos": 17,
-      "Expr": {
-        "LeftExpr": {
-          "Name": "id",
-          "QuoteType": 1,
-          "NamePos": 23,
-          "NameEnd": 25
-        },
-        "Operation": "=",
-        "RightExpr": {
-          "PlaceholderPos": 28,
-          "PlaceHolderEnd": 28,
-          "Type": "?"
-        },
-        "HasGlobal": false,
-        "HasNot": false
-      }
-    },
+    "Where": null,
     "GroupBy": null,
     "WithTotal": false,
     "Having": null,
